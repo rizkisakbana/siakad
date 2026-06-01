@@ -1,11 +1,14 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/matakuliah_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
+
+/** @var mysqli $conn */
 
 $id_mk = intval($_GET['id'] ?? 0);
 
@@ -15,7 +18,7 @@ if ($id_mk <= 0) {
     exit;
 }
 
-$cek = mysqli_query($conn, "
+$data = matakuliah_query_one($conn, "
     SELECT 
         mata_kuliah.*,
         kurikulum.nama_kurikulum,
@@ -27,19 +30,17 @@ $cek = mysqli_query($conn, "
     LIMIT 1
 ");
 
-if (mysqli_num_rows($cek) < 1) {
+if (!$data) {
     set_alert("error", "Data mata kuliah tidak ditemukan.");
     header("Location: data_matakuliah.php");
     exit;
 }
 
-$data = mysqli_fetch_assoc($cek);
-
-$cek_jadwal = mysqli_fetch_assoc(mysqli_query($conn, "
+$cek_jadwal = matakuliah_count($conn, "
     SELECT COUNT(*) AS total
     FROM jadwal_kuliah
     WHERE id_mk = '$id_mk'
-"))['total'] ?? 0;
+");
 
 if ($cek_jadwal > 0) {
     set_alert("warning", "Mata kuliah tidak dapat dihapus karena sudah digunakan pada jadwal kuliah.");
@@ -47,7 +48,7 @@ if ($cek_jadwal > 0) {
     exit;
 }
 
-$hapus = mysqli_query($conn, "
+$hapus = matakuliah_execute($conn, "
     DELETE FROM mata_kuliah
     WHERE id_mk = '$id_mk'
 ");

@@ -1,11 +1,12 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/neofeeder_helper.php";
-require_once "pull_master_akademik_helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/neofeeder_helper.php";
+require_once __DIR__ . "/neofeeder_admin_helper.php";
+require_once __DIR__ . "/pull_master_akademik_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -30,13 +31,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pull_matakuliah'])) {
 $summary = $_SESSION['pull_matakuliah_summary'] ?? null;
 unset($_SESSION['pull_matakuliah_summary']);
 
-$total_lokal = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) total FROM mata_kuliah"))['total'] ?? 0;
-$total_feeder = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) total FROM mata_kuliah WHERE COALESCE(NULLIF(id_matkul_feeder,''),'') <> ''"))['total'] ?? 0;
-$total_kurikulum = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) total FROM kurikulum"))['total'] ?? 0;
+$total_lokal = nf_count($conn, "SELECT COUNT(*) total FROM mata_kuliah");
+$total_feeder = nf_count($conn, "SELECT COUNT(*) total FROM mata_kuliah WHERE COALESCE(NULLIF(id_matkul_feeder,''),'') <> ''");
+$total_kurikulum = nf_count($conn, "SELECT COUNT(*) total FROM kurikulum");
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -106,4 +107,4 @@ require_once "../../includes/navbar.php";
     </section>
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

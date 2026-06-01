@@ -1,10 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/neofeeder_helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/neofeeder_helper.php";
+require_once __DIR__ . "/neofeeder_admin_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -60,15 +61,15 @@ function ambil_data_pertama($response) {
 
 function get_role_mahasiswa($conn)
 {
-    $q = mysqli_query($conn, "
+    $role = nf_query_one($conn, "
         SELECT id_role 
         FROM roles
         WHERE nama_role = 'mahasiswa'
         LIMIT 1
     ");
 
-    if ($q && mysqli_num_rows($q) > 0) {
-        return mysqli_fetch_assoc($q)['id_role'];
+    if ($role) {
+        return $role['id_role'];
     }
 
     return 0;
@@ -86,7 +87,7 @@ function user_email_sql_aman($conn, $email, $id_user = 0)
     $id_user = (int) $id_user;
     $exclude = $id_user > 0 ? "AND id_user != '$id_user'" : "";
 
-    $cek = mysqli_query($conn, "
+    $cek = nf_exists($conn, "
         SELECT id_user
         FROM users
         WHERE email = '$email_db'
@@ -94,14 +95,14 @@ function user_email_sql_aman($conn, $email, $id_user = 0)
         LIMIT 1
     ");
 
-    if ($cek && mysqli_num_rows($cek) > 0) {
+    if ($cek) {
         return "NULL";
     }
 
     return "'$email_db'";
 }
 
-$data_prodi = mysqli_query($conn, "
+$data_prodi = nf_fetch_all($conn, "
     SELECT id_prodi, kode_prodi, nama_prodi, jenjang, id_feeder, id_prodi_feeder
     FROM prodi
     WHERE status = 'aktif'
@@ -121,18 +122,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pull_mahasiswa'])) {
     if ($limit > 500)
         $limit = 500;
 
-    $q_prodi = mysqli_query($conn, "
+    $prodi = nf_query_one($conn, "
         SELECT *
         FROM prodi
         WHERE id_prodi = '$id_prodi_lokal'
         LIMIT 1
     ");
 
-    if (!$q_prodi || mysqli_num_rows($q_prodi) < 1) {
+    if (!$prodi) {
         set_alert("error", "Program studi tidak valid.");
     } else {
-
-        $prodi = mysqli_fetch_assoc($q_prodi);
 
             $id_prodi_feeder_source = $prodi['id_prodi_feeder'] ?: $prodi['id_feeder'];
 
@@ -292,7 +291,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pull_mahasiswa'])) {
                             $username = $nim;
                             $password_default = password_hash("123456", PASSWORD_DEFAULT);
 
-                            $cek_mhs = mysqli_query($conn, "
+                            $lokal = nf_query_one($conn, "
                                 SELECT id_mahasiswa, id_user
                                 FROM mahasiswa
                                 WHERE nim = '$nim'
@@ -301,9 +300,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pull_mahasiswa'])) {
                                 LIMIT 1
                             ");
 
-                            if ($cek_mhs && mysqli_num_rows($cek_mhs) > 0) {
+                            if ($lokal) {
 
-                                $lokal = mysqli_fetch_assoc($cek_mhs);
                                 $id_mahasiswa_lokal = intval($lokal['id_mahasiswa']);
                                 $id_user_lokal = intval($lokal['id_user']);
 
@@ -383,15 +381,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pull_mahasiswa'])) {
 
                             } else {
 
-                                $cek_user = mysqli_query($conn, "
+                                $u = nf_query_one($conn, "
                                     SELECT id_user
                                     FROM users
                                     WHERE username = '$username'
                                     LIMIT 1
                                 ");
 
-                                if ($cek_user && mysqli_num_rows($cek_user) > 0) {
-                                    $u = mysqli_fetch_assoc($cek_user);
+                                if ($u) {
                                     $id_user = intval($u['id_user']);
                                 } else {
                                     $q_user = mysqli_query($conn, "
@@ -586,9 +583,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pull_mahasiswa'])) {
 $summary = $_SESSION['pull_mahasiswa_summary'] ?? null;
 unset($_SESSION['pull_mahasiswa_summary']);
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -664,12 +661,12 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Program Studi</label>
                 <select name="id_prodi" required class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">-- Pilih Prodi --</option>
-                    <?php while ($prodi = mysqli_fetch_assoc($data_prodi)): ?>
+                    <?php foreach ($data_prodi as $prodi): ?>
                         <option value="<?= $prodi['id_prodi']; ?>">
                             <?= htmlspecialchars($prodi['nama_prodi']); ?> - <?= htmlspecialchars($prodi['jenjang']); ?>
                             <?= empty($prodi['id_prodi_feeder'] ?: $prodi['id_feeder']) ? ' (Belum ada ID Feeder)' : ''; ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -714,4 +711,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

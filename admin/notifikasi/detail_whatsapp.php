@@ -1,8 +1,9 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/notifikasi_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik', 'admin_keuangan']);
@@ -20,7 +21,7 @@ if ($id_whatsapp_log <= 0) {
     exit;
 }
 
-$query = mysqli_query($conn, "
+$data = notifikasi_one($conn, "
     SELECT 
         whatsapp_log.*,
         users.nama_lengkap,
@@ -35,15 +36,13 @@ $query = mysqli_query($conn, "
     LIMIT 1
 ");
 
-if (mysqli_num_rows($query) < 1) {
+if (!$data) {
     echo "<script>
         alert('Data WhatsApp tidak ditemukan.');
         window.location='data_whatsapp.php';
     </script>";
     exit;
 }
-
-$data = mysqli_fetch_assoc($query);
 
 simpan_log(
     $conn,
@@ -52,9 +51,9 @@ simpan_log(
     "WhatsApp Gateway"
 );
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -242,4 +241,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

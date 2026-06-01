@@ -1,8 +1,9 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/notification.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/notification.php";
+require_once __DIR__ . "/notifikasi_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik', 'admin_keuangan']);
@@ -20,7 +21,7 @@ $query_count = $paksa
     ? "SELECT COUNT(*) AS total FROM notifikasi WHERE status_baca = 'belum'"
     : "SELECT COUNT(*) AS total FROM notifikasi WHERE status_baca = 'belum' AND id_user = '" . intval($id_user) . "'";
 
-$total_ditandai = mysqli_fetch_assoc(mysqli_query($conn, $query_count))['total'] ?? 0;
+$total_ditandai = notifikasi_count($conn, $query_count);
 $berhasil = tandai_semua_notifikasi_dibaca($conn, $id_user, $paksa);
 
 if ($berhasil) {

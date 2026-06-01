@@ -8,6 +8,7 @@ require_once __DIR__ . "/../../includes/notification.php";
 require_once __DIR__ . "/../../includes/email_gateway.php";
 require_once __DIR__ . "/../../includes/whatsapp_gateway.php";
 require_once __DIR__ . "/../../includes/upload.php";
+require_once __DIR__ . "/pengguna_helper.php";
 
 /** @var mysqli $conn */
 
@@ -25,16 +26,15 @@ if ($id_user <= 0) {
     exit;
 }
 
-$query = mysqli_query($conn, "SELECT * FROM users WHERE id_user='$id_user' LIMIT 1");
-if (!$query || mysqli_num_rows($query) < 1) {
+$data = pengguna_one($conn, "SELECT * FROM users WHERE id_user='$id_user' LIMIT 1");
+if (!$data) {
     set_alert("error", "Data pengguna tidak ditemukan.");
     header("Location: data_pengguna.php");
     exit;
 }
 
-$data = mysqli_fetch_assoc($query);
-$roles = mysqli_query($conn, "SELECT * FROM roles ORDER BY nama_role ASC");
-if (!$roles) {
+$roles = pengguna_all($conn, "SELECT * FROM roles ORDER BY nama_role ASC");
+if (empty($roles)) {
     set_alert("error", "Data role gagal dimuat.");
     header("Location: data_pengguna.php");
     exit;
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($_FILES['foto']['name'])) {
         $upload = upload_file(
             $_FILES['foto'],
-            "../../uploads/pengguna",
+            __DIR__ . "/../../uploads/pengguna",
             ['jpg', 'jpeg', 'png'],
             2097152
         );
@@ -61,8 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$upload['status']) {
             set_alert("error", $upload['message']);
         } else {
-            if (!empty($data['foto']) && file_exists("../../uploads/pengguna/" . $data['foto'])) {
-                unlink("../../uploads/pengguna/" . $data['foto']);
+            $foto_lama = __DIR__ . "/../../uploads/pengguna/" . ($data['foto'] ?? '');
+            if (!empty($data['foto']) && file_exists($foto_lama)) {
+                unlink($foto_lama);
             }
 
             $foto_baru = mysqli_real_escape_string($conn, $upload['filename']);
@@ -73,16 +74,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($id_role <= 0 || empty($username) || empty($nama_lengkap)) {
         set_alert("error", "Role, username, dan nama lengkap wajib diisi.");
     } else {
-        $cek = mysqli_query($conn, "
+        $cek = pengguna_one($conn, "
             SELECT id_user FROM users 
             WHERE username='$username' AND id_user != '$id_user'
             LIMIT 1
         ");
+        $cek_email = !empty($email)
+            ? pengguna_one($conn, "
+                SELECT id_user FROM users
+                WHERE email='$email' AND id_user != '$id_user'
+                LIMIT 1
+            ")
+            : null;
 
-        if (!$cek) {
-            set_alert("error", "Validasi username gagal diproses.");
-        } elseif (mysqli_num_rows($cek) > 0) {
+        if ($cek) {
             set_alert("error", "Username sudah digunakan pengguna lain.");
+        } elseif ($cek_email) {
+            set_alert("error", "Email sudah digunakan pengguna lain.");
         } else {
             $password_sql = "";
             $password_info = "Tidak diubah oleh administrator.";
@@ -91,14 +99,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $password_sql = ", password='$password_hash'";
                 $password_info = htmlspecialchars($password, ENT_QUOTES, 'UTF-8');
             }
+            $email_sql = pengguna_sql_value($conn, $email);
+            $no_hp_sql = pengguna_sql_value($conn, $no_hp);
 
-            $update = mysqli_query($conn, "
+            $update = pengguna_execute($conn, "
                 UPDATE users SET
                     id_role='$id_role',
                     username='$username',
                     nama_lengkap='$nama_lengkap',
-                    email='$email',
-                    no_hp='$no_hp',
+                    email=$email_sql,
+                    no_hp=$no_hp_sql,
                     status='$status'
                     $password_sql
                     $foto_sql
@@ -232,14 +242,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 header("Location: data_pengguna.php");
                 exit;
+            } else {
+                set_alert("error", "Pengguna gagal diperbarui. Periksa kembali username, email, dan data wajib lainnya.");
             }
         }
     }
 }
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -264,11 +276,11 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Role</label>
                 <select name="id_role" required
                     class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-2 focus:ring-blue-600 outline-none">
-                    <?php while ($role = mysqli_fetch_assoc($roles)): ?>
+                    <?php foreach ($roles as $role): ?>
                         <option value="<?= $role['id_role']; ?>" <?= $data['id_role'] == $role['id_role'] ? 'selected' : ''; ?>>
                             <?= htmlspecialchars(str_replace('_', ' ', $role['nama_role'])); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -357,4 +369,4 @@ require_once "../../includes/navbar.php";
     </section>
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

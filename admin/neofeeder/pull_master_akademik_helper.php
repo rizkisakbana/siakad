@@ -63,15 +63,14 @@ function ma_prodi_lokal($conn, $id_prodi_feeder)
     }
 
     $id = mysqli_real_escape_string($conn, $id_prodi_feeder);
-    $q = mysqli_query($conn, "
+    $row = nf_query_one($conn, "
         SELECT id_prodi, COALESCE(NULLIF(id_prodi_feeder, ''), NULLIF(id_feeder, '')) AS id_feeder
         FROM prodi
         WHERE id_prodi_feeder = '$id' OR id_feeder = '$id'
         LIMIT 1
     ");
 
-    if ($q && mysqli_num_rows($q) > 0) {
-        $row = mysqli_fetch_assoc($q);
+    if ($row) {
         return [(int) $row['id_prodi'], $row['id_feeder']];
     }
 
@@ -99,7 +98,7 @@ function ma_kurikulum_lokal($conn, $id_kurikulum_feeder, $id_prodi = 0)
         ? $conditions[0]
         : implode(' AND ', $conditions);
 
-    $q = mysqli_query($conn, "
+    $row = nf_query_one($conn, "
         SELECT id_kurikulum
         FROM kurikulum
         WHERE $where
@@ -107,8 +106,7 @@ function ma_kurikulum_lokal($conn, $id_kurikulum_feeder, $id_prodi = 0)
         LIMIT 1
     ");
 
-    if ($q && mysqli_num_rows($q) > 0) {
-        $row = mysqli_fetch_assoc($q);
+    if ($row) {
         return (int) $row['id_kurikulum'];
     }
 
@@ -119,7 +117,7 @@ function ma_matkul_lokal($conn, $id_matkul_feeder, $kode_mk = '', $id_prodi_feed
 {
     if (trim((string) $id_matkul_feeder) !== '') {
         $id = mysqli_real_escape_string($conn, trim((string) $id_matkul_feeder));
-        $q = mysqli_query($conn, "
+        $row = nf_query_one($conn, "
             SELECT id_mk
             FROM mata_kuliah
             WHERE id_matkul_feeder = '$id'
@@ -127,8 +125,7 @@ function ma_matkul_lokal($conn, $id_matkul_feeder, $kode_mk = '', $id_prodi_feed
             LIMIT 1
         ");
 
-        if ($q && mysqli_num_rows($q) > 0) {
-            $row = mysqli_fetch_assoc($q);
+        if ($row) {
             return (int) $row['id_mk'];
         }
     }
@@ -150,7 +147,7 @@ function ma_matkul_lokal($conn, $id_matkul_feeder, $kode_mk = '', $id_prodi_feed
         )";
     }
 
-    $q = mysqli_query($conn, "
+    $row = nf_query_one($conn, "
         SELECT mata_kuliah.id_mk
         FROM mata_kuliah
         LEFT JOIN kurikulum ON mata_kuliah.id_kurikulum = kurikulum.id_kurikulum
@@ -160,8 +157,7 @@ function ma_matkul_lokal($conn, $id_matkul_feeder, $kode_mk = '', $id_prodi_feed
         LIMIT 1
     ");
 
-    if ($q && mysqli_num_rows($q) > 0) {
-        $row = mysqli_fetch_assoc($q);
+    if ($row) {
         return (int) $row['id_mk'];
     }
 
@@ -175,7 +171,7 @@ function ma_kurikulum_meta($conn, $id_kurikulum)
         return null;
     }
 
-    $q = mysqli_query($conn, "
+    $row = nf_query_one($conn, "
         SELECT
             kurikulum.id_kurikulum,
             kurikulum.id_prodi,
@@ -186,8 +182,8 @@ function ma_kurikulum_meta($conn, $id_kurikulum)
         LIMIT 1
     ");
 
-    if ($q && mysqli_num_rows($q) > 0) {
-        return mysqli_fetch_assoc($q);
+    if ($row) {
+        return $row;
     }
 
     return null;

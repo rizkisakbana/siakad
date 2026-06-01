@@ -1,11 +1,12 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/neofeeder_helper.php";
-require_once "pull_perkuliahan_inti_helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/neofeeder_helper.php";
+require_once __DIR__ . "/neofeeder_admin_helper.php";
+require_once __DIR__ . "/pull_perkuliahan_inti_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -30,12 +31,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pull_data'])) {
 $summary = $_SESSION[$summary_key] ?? null;
 unset($_SESSION[$summary_key]);
 
-$total_lokal = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) total FROM dosen_pengajar_kelas"))['total'] ?? 0;
-$total_feeder = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) total FROM dosen_pengajar_kelas WHERE COALESCE(NULLIF(id_kelas_kuliah_feeder,''),'') <> ''"))['total'] ?? 0;
+$total_lokal = nf_count($conn, "SELECT COUNT(*) total FROM dosen_pengajar_kelas");
+$total_feeder = nf_count($conn, "SELECT COUNT(*) total FROM dosen_pengajar_kelas WHERE COALESCE(NULLIF(id_kelas_kuliah_feeder,''),'') <> ''");
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -81,4 +82,4 @@ require_once "../../includes/navbar.php";
     </section>
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

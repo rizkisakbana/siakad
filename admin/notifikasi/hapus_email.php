@@ -1,7 +1,8 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/notifikasi_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik', 'admin_keuangan']);
@@ -16,7 +17,7 @@ if ($id_email_log <= 0) {
     exit;
 }
 
-$cek = mysqli_query($conn, "
+$data = notifikasi_one($conn, "
     SELECT 
         email_log.*,
         users.nama_lengkap
@@ -26,7 +27,7 @@ $cek = mysqli_query($conn, "
     LIMIT 1
 ");
 
-if (mysqli_num_rows($cek) < 1) {
+if (!$data) {
     echo "<script>
         alert('Data email tidak ditemukan.');
         window.location='data_email.php';
@@ -34,9 +35,7 @@ if (mysqli_num_rows($cek) < 1) {
     exit;
 }
 
-$data = mysqli_fetch_assoc($cek);
-
-$hapus = mysqli_query($conn, "
+$hapus = notifikasi_execute($conn, "
     DELETE FROM email_log
     WHERE id_email_log = '$id_email_log'
 ");

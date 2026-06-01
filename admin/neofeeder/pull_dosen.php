@@ -1,10 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/neofeeder_helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/neofeeder_helper.php";
+require_once __DIR__ . "/neofeeder_admin_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -83,15 +84,14 @@ function cari_prodi_lokal_dosen($conn, $id_prodi_feeder)
     }
 
     $id = mysqli_real_escape_string($conn, $id_prodi_feeder);
-    $q = mysqli_query($conn, "
+    $row = nf_query_one($conn, "
         SELECT id_prodi, COALESCE(NULLIF(id_prodi_feeder, ''), NULLIF(id_feeder, '')) AS id_feeder
         FROM prodi
         WHERE id_prodi_feeder = '$id' OR id_feeder = '$id'
         LIMIT 1
     ");
 
-    if ($q && mysqli_num_rows($q) > 0) {
-        $row = mysqli_fetch_assoc($q);
+    if ($row) {
         return [$row['id_prodi'], $row['id_feeder']];
     }
 
@@ -113,7 +113,7 @@ function cari_dosen_lokal($conn, $data)
         return null;
     }
 
-    $q = mysqli_query($conn, "
+    $row = nf_query_one($conn, "
         SELECT id_dosen
         FROM dosen
         WHERE " . implode(' OR ', $conditions) . "
@@ -121,8 +121,7 @@ function cari_dosen_lokal($conn, $data)
         LIMIT 1
     ");
 
-    if ($q && mysqli_num_rows($q) > 0) {
-        $row = mysqli_fetch_assoc($q);
+    if ($row) {
         return (int) $row['id_dosen'];
     }
 
@@ -148,7 +147,7 @@ function cari_dosen_lokal_by_feeder($conn, $id_dosen_feeder, $nidn = '')
         return null;
     }
 
-    $q = mysqli_query($conn, "
+    $row = nf_query_one($conn, "
         SELECT id_dosen
         FROM dosen
         WHERE " . implode(' OR ', $conditions) . "
@@ -156,8 +155,7 @@ function cari_dosen_lokal_by_feeder($conn, $id_dosen_feeder, $nidn = '')
         LIMIT 1
     ");
 
-    if ($q && mysqli_num_rows($q) > 0) {
-        $row = mysqli_fetch_assoc($q);
+    if ($row) {
         return (int) $row['id_dosen'];
     }
 
@@ -303,15 +301,14 @@ function simpan_penugasan_dosen_feeder($conn, $row)
 
     $fields = array_keys($data);
     $escaped_id = mysqli_real_escape_string($conn, $id_registrasi);
-    $cek = mysqli_query($conn, "
+    $existing = nf_query_one($conn, "
         SELECT id_penugasan
         FROM dosen_penugasan_feeder
         WHERE id_registrasi_dosen_feeder = '$escaped_id'
         LIMIT 1
     ");
 
-    if ($cek && mysqli_num_rows($cek) > 0) {
-        $existing = mysqli_fetch_assoc($cek);
+    if ($existing) {
         $sets = [];
 
         foreach ($fields as $field) {
@@ -350,7 +347,7 @@ function simpan_penugasan_dosen_feeder($conn, $row)
     return $ok ? ['status' => 'insert', 'message' => null] : ['status' => 'gagal', 'message' => mysqli_error($conn)];
 }
 
-$data_prodi = mysqli_query($conn, "
+$data_prodi = nf_fetch_all($conn, "
     SELECT id_prodi, kode_prodi, nama_prodi, jenjang, COALESCE(NULLIF(id_prodi_feeder, ''), NULLIF(id_feeder, '')) AS id_feeder
     FROM prodi
     ORDER BY nama_prodi ASC
@@ -367,20 +364,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pull_dosen'])) {
     $id_feeder_filter = "";
 
     if ($id_prodi_lokal > 0) {
-        $q_prodi = mysqli_query($conn, "
+        $prodi = nf_query_one($conn, "
             SELECT nama_prodi, COALESCE(NULLIF(id_prodi_feeder, ''), NULLIF(id_feeder, '')) AS id_feeder
             FROM prodi
             WHERE id_prodi = '$id_prodi_lokal'
             LIMIT 1
         ");
 
-        if (!$q_prodi || mysqli_num_rows($q_prodi) < 1) {
+        if (!$prodi) {
             set_alert("error", "Program studi tidak ditemukan.");
             header("Location: pull_dosen.php");
             exit;
         }
 
-        $prodi = mysqli_fetch_assoc($q_prodi);
         $prodi_label = $prodi['nama_prodi'];
         $id_feeder_filter = $prodi['id_feeder'] ?? '';
     }
@@ -532,9 +528,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pull_dosen'])) {
 $summary = $_SESSION['pull_dosen_summary'] ?? null;
 unset($_SESSION['pull_dosen_summary']);
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -611,13 +607,13 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Program Studi</label>
                 <select name="id_prodi" class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">Semua prodi</option>
-                    <?php if ($data_prodi): ?>
-                        <?php while ($prodi = mysqli_fetch_assoc($data_prodi)): ?>
+                    <?php if (!empty($data_prodi)): ?>
+                        <?php foreach ($data_prodi as $prodi): ?>
                             <option value="<?= $prodi['id_prodi']; ?>">
                                 <?= htmlspecialchars($prodi['nama_prodi']); ?> - <?= htmlspecialchars($prodi['jenjang']); ?>
                                 <?= empty($prodi['id_feeder']) ? ' (Belum ada ID Feeder)' : ''; ?>
                             </option>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     <?php endif; ?>
                 </select>
             </div>
@@ -662,4 +658,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>
