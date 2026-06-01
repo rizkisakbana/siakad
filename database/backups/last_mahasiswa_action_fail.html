@@ -1,0 +1,1553 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Tambah Mahasiswa</title>
+
+    <link rel="icon" type="image/x-icon" href="/siakad-atitb/assets/img/favicon.ico">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+<div id="sidebarOverlay" class="hidden fixed inset-0 bg-black/40 z-40 lg:hidden"></div>
+
+<aside id="sidebar"
+    class="fixed top-0 left-0 w-[270px] h-screen flex flex-col bg-white shadow-2xl z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+
+    <div class="p-4 border-b border-slate-200">
+        <div class="flex justify-center items-center">
+            <img src="/siakad-atitb/assets/img/logo-atitb.png" alt="Logo SIAKAD" class="h-16 w-auto object-contain">
+        </div>
+
+        <h1 class="text-center text-blue-800 font-bold text-lg mt-1">
+            SIAKAD ATITB
+        </h1>
+
+        <p class="text-center text-slate-400 font-medium text-xs">
+            Version 1.0
+        </p>
+    </div>
+
+    <nav class="p-4 overflow-y-auto flex-1">
+        <ul class="space-y-2">
+
+            
+                <li>
+                    <a href="/siakad-atitb/admin/dashboard.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-home w-5 mr-3 text-center"></i>
+            <span>Dashboard</span>
+        </span>
+                        </a>
+                </li>
+
+                <div class="mt-4 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Profil PT</div>
+
+                <li>
+                    <button type="button" onclick="toggleSubMenu('menu-profil-pt')"
+                        class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-university w-5 mr-3 text-center"></i>
+            <span>Profil PT</span>
+        </span>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                    </button>
+                    <ul id="menu-profil-pt" class="hidden pl-8 mt-1 space-y-1">
+                        <li><a href="/siakad-atitb/profil_pt/profil_pt.php"
+                                class="block py-2 text-sm text-slate-600 hover:text-blue-700"> 
+                                <i class="fas fa-university mr-2"></i>Profil PT</a></li>
+                        <li><a href="/siakad-atitb/profil_pt/profil_mi.php"
+                                class="block py-2 text-sm text-slate-600 hover:text-blue-700">
+                                <i class="fas fa-laptop mr-2"></i>Prodi MI</a></li>
+                        <li><a href="/siakad-atitb/profil_pt/profil_ka.php"
+                                class="block py-2 text-sm text-slate-600 hover:text-blue-700">
+                                <i class="fas fa-calculator mr-2"></i>Prodi KA</a></li>
+                    </ul>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/pmb/data_pendaftar.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-user-plus w-5 mr-3 text-center"></i>
+            <span>PMB</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/mahasiswa/data_mahasiswa.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl bg-blue-700 text-white font-semibold shadow">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-user-graduate w-5 mr-3 text-center"></i>
+            <span>Mahasiswa</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/dosen/data_dosen.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-chalkboard-teacher w-5 mr-3 text-center"></i>
+            <span>Dosen</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/perkuliahan/data_kelas_kuliah.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-chalkboard w-5 mr-3 text-center"></i>
+            <span>Perkuliahan</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/prodi/data_prodi.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-building-columns w-5 mr-3 text-center"></i>
+            <span>Program Studi</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/kurikulum/data_kurikulum.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-layer-group w-5 mr-3 text-center"></i>
+            <span>Kurikulum</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/matakuliah/data_matakuliah.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-book w-5 mr-3 text-center"></i>
+            <span>Mata Kuliah</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/kelas/data_kelas.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-users-rectangle w-5 mr-3 text-center"></i>
+            <span>Kelas</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/ruangan/data_ruangan.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-door-open w-5 mr-3 text-center"></i>
+            <span>Ruangan</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/jadwal/data_jadwal.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-calendar-days w-5 mr-3 text-center"></i>
+            <span>Jadwal Kuliah</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/akademik/krs_mahasiswa.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-clipboard-list w-5 mr-3 text-center"></i>
+            <span>KRS</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/akademik/khs_mahasiswa.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-file-lines w-5 mr-3 text-center"></i>
+            <span>KHS</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/akademik/transkrip_mahasiswa.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-file-signature w-5 mr-3 text-center"></i>
+            <span>Transkrip</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/keuangan/tagihan_mahasiswa.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-wallet w-5 mr-3 text-center"></i>
+            <span>Keuangan</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/tugas_akhir/data_ta.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-graduation-cap w-5 mr-3 text-center"></i>
+            <span>Tugas Akhir</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/yudisium/data_yudisium.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-award w-5 mr-3 text-center"></i>
+            <span>Yudisium</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/wisuda/data_wisuda.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-user-check w-5 mr-3 text-center"></i>
+            <span>Wisuda</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/laporan/data_laporan.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-chart-bar w-5 mr-3 text-center"></i>
+            <span>Laporan</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/tahun_akademik/data_tahun.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-calendar-check w-5 mr-3 text-center"></i>
+            <span>Tahun Akademik</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/pengguna/data_pengguna.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-users-cog w-5 mr-3 text-center"></i>
+            <span>Pengguna</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/log_aktivitas/data_aktivitas.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-clock-rotate-left w-5 mr-3 text-center"></i>
+            <span>Log Aktivitas</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/profil/profil.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-user w-5 mr-3 text-center"></i>
+            <span>Profil Saya</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/neofeeder/data_pull.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-sync w-5 mr-3 text-center"></i>
+            <span>NeoFeeder</span>
+        </span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="/siakad-atitb/admin/sinkronisasi/sinkronisasi.php"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-700 hover:text-white transition">
+                        
+        <span class="flex items-center">
+            <i class="fas fa-sync w-5 mr-3 text-center"></i>
+            <span>Sinkronisasi</span>
+        </span>
+                        </a>
+                </li>
+
+            
+        </ul>
+    </nav>
+
+    <div class="p-4 border-t border-slate-200">
+        <form action="/siakad-atitb/auth/logout.php" method="POST">
+            <input type="hidden" name="csrf_token" value="3a5f10ad70258624c2aa414e2ed651318781f71e6b9b2dd9f905a8578c7a3a3f">
+            <button type="submit"
+                class="w-full flex items-center px-4 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition">
+                <i class="fas fa-sign-out-alt w-5 mr-3 text-center"></i>
+                Logout
+            </button>
+        </form>
+    </div>
+    <script>
+        function toggleSubMenu(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+    </script>
+</aside>
+
+<header class="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm lg:ml-[270px]">
+    <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
+
+        <div class="flex items-center gap-4 min-w-0">
+
+            <button id="menuButton"
+                class="lg:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+
+            <div class="min-w-0">
+                <h1 class="text-lg sm:text-xl font-bold text-blue-800 truncate">
+                    Tambah Mahasiswa                </h1>
+                <p class="hidden sm:block text-sm text-slate-500 truncate">
+                    Menambahkan data mahasiswa dan akun pengguna SIAKAD                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+
+            <a href="/siakad-atitb/admin/notifikasi/data_notifikasi.php"
+                class="relative inline-flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition">
+                <i class="fa-solid fa-bell"></i>
+
+                            </a>
+
+            <div class="relative">
+                <button id="profileButton"
+                    class="flex items-center gap-3 rounded-xl hover:bg-slate-100 px-2 py-2 transition">
+
+                    <div class="hidden md:block text-right">
+                        <p class="text-xs text-slate-400">Login sebagai</p>
+                        <h3 class="text-sm font-bold text-slate-700 max-w-[180px] truncate">
+                            RIZKI SAKBANA                        </h3>
+                        <p class="text-xs text-blue-600 capitalize">
+                            super admin                        </p>
+                    </div>
+
+                                            <img src="/siakad-atitb/uploads/pengguna/20260524203855_6a1345bf2e1f8.png" alt="Foto RIZKI SAKBANA"
+                            class="w-10 h-10 rounded-full object-cover border-2 border-blue-100 shadow-sm">
+                    
+                    <i class="fa-solid fa-chevron-down text-xs text-slate-500 hidden sm:block"></i>
+                </button>
+
+                <div id="profileDropdown"
+                    class="hidden absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden z-50">
+
+                    <div class="px-4 py-3 border-b border-slate-100">
+                        <div class="flex items-center gap-3">
+                                                            <img src="/siakad-atitb/uploads/pengguna/20260524203855_6a1345bf2e1f8.png" alt="Foto RIZKI SAKBANA"
+                                    class="w-10 h-10 rounded-full object-cover border border-slate-200">
+                            
+                            <div class="min-w-0">
+                                <p class="font-semibold text-slate-800 truncate">
+                                    RIZKI SAKBANA                                </p>
+                                <p class="text-xs text-slate-500 capitalize">
+                                    super admin                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="/siakad-atitb/admin/profil/profil.php"
+                        class="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition">
+                        <i class="fa-solid fa-user"></i>
+                        <span>Profil Saya</span>
+                    </a>
+
+                    <form action="/siakad-atitb/auth/logout.php" method="POST">
+                        <input type="hidden" name="csrf_token" value="3a5f10ad70258624c2aa414e2ed651318781f71e6b9b2dd9f905a8578c7a3a3f">
+                        <button type="submit"
+                            class="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition text-left">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            <span>Logout</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</header>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const menuButton = document.getElementById('menuButton');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    if (menuButton && sidebar && sidebarOverlay) {
+        menuButton.addEventListener('click', function () {
+            sidebar.classList.remove('-translate-x-full');
+            sidebarOverlay.classList.remove('hidden');
+        });
+
+        sidebarOverlay.addEventListener('click', function () {
+            sidebar.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('hidden');
+        });
+    }
+
+    const profileButton = document.getElementById('profileButton');
+    const profileDropdown = document.getElementById('profileDropdown');
+
+    if (profileButton && profileDropdown) {
+        profileButton.addEventListener('click', function (e) {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function () {
+            profileDropdown.classList.add('hidden');
+        });
+    }
+});
+</script>
+
+<main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
+
+    
+        <div class="mb-5 rounded-xl border px-4 py-3 text-sm font-semibold bg-green-100 text-green-700 border-green-200">
+            <div class="flex items-start gap-3">
+                <i class="fa-solid fa-circle-check mt-0.5"></i>
+                <span>Data dosen berhasil dihapus. Email dan WhatsApp pemberitahuan telah diproses.</span>
+            </div>
+        </div>
+        
+    <!-- <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+            <h2 class="text-xl font-bold text-slate-800">Tambah Mahasiswa</h2>
+            <p class="text-sm text-slate-500">Lengkapi data mahasiswa, referensi PDDikti, dan akun login.</p>
+        </div>
+
+        <a href="data_mahasiswa.php"
+           class="inline-flex items-center justify-center px-4 py-3 rounded-xl bg-slate-700 hover:bg-slate-800 text-white font-semibold">
+            <i class="fa-solid fa-arrow-left mr-2"></i>
+            Kembali
+        </a>
+    </div> -->
+
+    <section class="bg-white rounded-2xl shadow-lg border border-slate-100 p-5 sm:p-6">
+
+        <form method="POST" enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+            <div class="lg:col-span-2">
+                <h3 class="text-lg font-bold text-slate-800 mb-2">Data Akademik</h3>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Program Studi <span
+                        class="text-red-600">*</span></label>
+                <select name="id_prodi" required class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                    <option value="">-- Pilih Prodi --</option>
+                                            <option value="4">
+                            Komputerisasi Akuntansi - D3                        </option>
+                                            <option value="5">
+                            Manajemen Informatika - D3                        </option>
+                                    </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Kelas</label>
+                <select name="id_kelas" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                    <option value="">-- Belum Masuk Kelas --</option>
+                                    </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">NIM <span
+                        class="text-red-600">*</span></label>
+                <input type="text" name="nim" required class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Angkatan</label>
+                <input type="number" name="angkatan" min="2000" max="2100"
+                    class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Semester</label>
+                <input type="number" name="semester" min="1" max="14" value="1"
+                    class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Tanggal Masuk</label>
+                <input type="date" name="tanggal_masuk" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Jalur Masuk PDDikti</label>
+                <select name="id_jalur_masuk_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                    <option value="">-- Pilih Jalur Masuk --</option>
+                                            <option value="3">
+                            Penelusuran Minat dan Kemampuan (PMDK)                        </option>
+                                            <option value="4">
+                            Prestasi                        </option>
+                                            <option value="9">
+                            Program Internasional                        </option>
+                                            <option value="11">
+                            Program Kerjasama Perusahaan/Institusi/Pemerintah                        </option>
+                                            <option value="12">
+                            Seleksi Mandiri                        </option>
+                                            <option value="15">
+                            Seleksi Nasional Berdasarkan Prestasi (SNBP)                        </option>
+                                            <option value="14">
+                            Seleksi Nasional Berdasarkan Tes (SNBT)                        </option>
+                                            <option value="13">
+                            Ujian Masuk Bersama Lainnya                        </option>
+                                    </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Jenis Pendaftaran PDDikti</label>
+                <select name="id_jenis_pendaftaran_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                    <option value="">-- Pilih Jenis Pendaftaran --</option>
+                                            <option value="19">
+                            Double Degree                        </option>
+                                            <option value="15">
+                            Fast Track                        </option>
+                                            <option value="20">
+                            Join Degree                        </option>
+                                            <option value="14">
+                            Pendidikan Non Gelar (Course)                        </option>
+                                            <option value="1">
+                            Peserta didik baru                        </option>
+                                            <option value="2">
+                            Pindahan                        </option>
+                                            <option value="18">
+                            PPG Non PGP / PLPG                        </option>
+                                            <option value="17">
+                            PPG PGP / PLPG                        </option>
+                                            <option value="13">
+                            RPL Perolehan SKS                        </option>
+                                            <option value="16">
+                            RPL Transfer SKS                        </option>
+                                    </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Status Mahasiswa PDDikti</label>
+                <select name="id_status_mahasiswa_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                    <option value="">-- Pilih Status Mahasiswa --</option>
+                                            <option value="A">
+                            Aktif                        </option>
+                                            <option value="C">
+                            Cuti                        </option>
+                                            <option value="M">
+                            Kampus Merdeka                        </option>
+                                            <option value="U">
+                            Menunggu Ujian                        </option>
+                                            <option value="N">
+                            Non-Aktif                                                   </option>
+                                            <option value="G">
+                            Sedang Double Degree                        </option>
+                                    </select>
+            </div>
+
+            <div class="lg:col-span-2 pt-4">
+                <h3 class="text-lg font-bold text-slate-800 mb-2">Biodata Mahasiswa</h3>
+            </div>
+
+            <div class="lg:col-span-2">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Mahasiswa <span
+                        class="text-red-600">*</span></label>
+                <input type="text" name="nama_mahasiswa" required
+                    class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Jenis Kelamin</label>
+                <select name="jenis_kelamin" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                    <option value="">-- Pilih --</option>
+                    <option value="L">Laki-laki</option>
+                    <option value="P">Perempuan</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Agama PDDikti</label>
+                <select name="id_agama_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                    <option value="">-- Pilih Agama --</option>
+                                            <option value="5">
+                            Budha                        </option>
+                                            <option value="4">
+                            Hindu                        </option>
+                                            <option value="1">
+                            Islam                        </option>
+                                            <option value="3">
+                            Katolik                        </option>
+                                            <option value="6">
+                            Khonghucu                        </option>
+                                            <option value="2">
+                            Kristen                        </option>
+                                            <option value="99">
+                            Lainnya                        </option>
+                                            <option value="7">
+                            Penghayat Kepercayaan Terhadap Tuhan YME                        </option>
+                                    </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Tempat Lahir</label>
+                <input type="text" name="tempat_lahir" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Tanggal Lahir</label>
+                <input type="date" name="tanggal_lahir" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">NIK</label>
+                <input type="text" name="nik" maxlength="16"
+                    class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">NISN</label>
+                <input type="text" name="nisn" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">NPWP</label>
+                <input type="text" name="npwp" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Negara / Kewarganegaraan</label>
+                <select name="id_negara_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                    <option value="">-- Pilih Negara --</option>
+                                            <option value="AF" >
+                            Afghanistan                        </option>
+                                            <option value="AX" >
+                            Aland Islands                        </option>
+                                            <option value="AL" >
+                            Albania                        </option>
+                                            <option value="DZ" >
+                            Algeria                        </option>
+                                            <option value="AS" >
+                            American Samoa                        </option>
+                                            <option value="AD" >
+                            Andorra                        </option>
+                                            <option value="AO" >
+                            Angola                        </option>
+                                            <option value="AI" >
+                            Anguilla                        </option>
+                                            <option value="AQ" >
+                            Antarctica                        </option>
+                                            <option value="AG" >
+                            Antigua And Barbuda                        </option>
+                                            <option value="AR" >
+                            Argentina                        </option>
+                                            <option value="AM" >
+                            Armenia                        </option>
+                                            <option value="AW" >
+                            Aruba                        </option>
+                                            <option value="AU" >
+                            Australia                        </option>
+                                            <option value="AT" >
+                            Austria                        </option>
+                                            <option value="AZ" >
+                            Azerbaijan                        </option>
+                                            <option value="BS" >
+                            Bahamas                        </option>
+                                            <option value="BH" >
+                            Bahrain                        </option>
+                                            <option value="BD" >
+                            Bangladesh                        </option>
+                                            <option value="BB" >
+                            Barbados                        </option>
+                                            <option value="BY" >
+                            Belarus                        </option>
+                                            <option value="BE" >
+                            Belgium                        </option>
+                                            <option value="BZ" >
+                            Belize                        </option>
+                                            <option value="BJ" >
+                            Benin                        </option>
+                                            <option value="BM" >
+                            Bermuda                        </option>
+                                            <option value="BT" >
+                            Bhutan                        </option>
+                                            <option value="BO" >
+                            Bolivia                        </option>
+                                            <option value="BQ" >
+                            Bonaire, Saint Eustatius and Saba                        </option>
+                                            <option value="BA" >
+                            Bosnia And Herzegovina                        </option>
+                                            <option value="BW" >
+                            Botswana                        </option>
+                                            <option value="BV" >
+                            Bouvet Island                        </option>
+                                            <option value="BR" >
+                            Brazil                        </option>
+                                            <option value="IO" >
+                            British Indian Ocean Territory                        </option>
+                                            <option value="BN" >
+                            Brunei Darussalam                        </option>
+                                            <option value="BG" >
+                            Bulgaria                        </option>
+                                            <option value="BF" >
+                            Burkina Faso                        </option>
+                                            <option value="BI" >
+                            Burundi                        </option>
+                                            <option value="KH" >
+                            Cambodia                        </option>
+                                            <option value="CM" >
+                            Cameroon                        </option>
+                                            <option value="CA" >
+                            Canada                        </option>
+                                            <option value="CV" >
+                            Cape Verde                        </option>
+                                            <option value="KY" >
+                            Cayman Islands                        </option>
+                                            <option value="CF" >
+                            Central African Republic                        </option>
+                                            <option value="TD" >
+                            Chad                        </option>
+                                            <option value="CL" >
+                            Chile                        </option>
+                                            <option value="CN" >
+                            China                        </option>
+                                            <option value="CX" >
+                            Christmas Island                        </option>
+                                            <option value="CC" >
+                            Cocos (Keeling) Islands                        </option>
+                                            <option value="CO" >
+                            Colombia                        </option>
+                                            <option value="KM" >
+                            Comoros                        </option>
+                                            <option value="CG" >
+                            Congo                        </option>
+                                            <option value="CD" >
+                            Congo, The Democratic Republic Of The                        </option>
+                                            <option value="CK" >
+                            Cook Islands                        </option>
+                                            <option value="CR" >
+                            Costa Rica                        </option>
+                                            <option value="CI" >
+                            Cote D&#039;Ivoire                        </option>
+                                            <option value="HR" >
+                            Croatia                        </option>
+                                            <option value="CU" >
+                            Cuba                        </option>
+                                            <option value="CW" >
+                            Curacao                        </option>
+                                            <option value="CY" >
+                            Cyprus                        </option>
+                                            <option value="CZ" >
+                            Czech Republic                        </option>
+                                            <option value="DK" >
+                            Denmark                        </option>
+                                            <option value="DJ" >
+                            Djibouti                        </option>
+                                            <option value="DM" >
+                            Dominica                        </option>
+                                            <option value="DO" >
+                            Dominican Republic                        </option>
+                                            <option value="EC" >
+                            Ecuador                        </option>
+                                            <option value="EG" >
+                            Egypt                        </option>
+                                            <option value="SV" >
+                            El Salvador                        </option>
+                                            <option value="GQ" >
+                            Equatorial Guinea                        </option>
+                                            <option value="ER" >
+                            Eritrea                        </option>
+                                            <option value="EE" >
+                            Estonia                        </option>
+                                            <option value="ET" >
+                            Ethiopia                        </option>
+                                            <option value="FK" >
+                            Falkland Islands (Malvinas)                        </option>
+                                            <option value="FO" >
+                            Faroe Islands                        </option>
+                                            <option value="FJ" >
+                            Fiji                        </option>
+                                            <option value="FI" >
+                            Finland                        </option>
+                                            <option value="FR" >
+                            France                        </option>
+                                            <option value="GF" >
+                            French Guiana                        </option>
+                                            <option value="PF" >
+                            French Polynesia                        </option>
+                                            <option value="TF" >
+                            French Southern Territories                        </option>
+                                            <option value="GA" >
+                            Gabon                        </option>
+                                            <option value="GM" >
+                            Gambia                        </option>
+                                            <option value="GE" >
+                            Georgia                        </option>
+                                            <option value="DE" >
+                            Germany                        </option>
+                                            <option value="GH" >
+                            Ghana                        </option>
+                                            <option value="GI" >
+                            Gibraltar                        </option>
+                                            <option value="GR" >
+                            Greece                        </option>
+                                            <option value="GL" >
+                            Greenland                        </option>
+                                            <option value="GD" >
+                            Grenada                        </option>
+                                            <option value="GP" >
+                            Guadeloupe                        </option>
+                                            <option value="GU" >
+                            Guam                        </option>
+                                            <option value="GT" >
+                            Guatemala                        </option>
+                                            <option value="GG" >
+                            Guernsey                        </option>
+                                            <option value="GN" >
+                            Guinea                        </option>
+                                            <option value="GW" >
+                            Guinea-Bissau                        </option>
+                                            <option value="GY" >
+                            Guyana                        </option>
+                                            <option value="HT" >
+                            Haiti                        </option>
+                                            <option value="HM" >
+                            Heard Island And Mcdonald Islands                        </option>
+                                            <option value="VA" >
+                            Holy See (Vatican City State)                        </option>
+                                            <option value="HN" >
+                            Honduras                        </option>
+                                            <option value="HK" >
+                            Hong Kong                        </option>
+                                            <option value="HU" >
+                            Hungary                        </option>
+                                            <option value="IS" >
+                            Iceland                        </option>
+                                            <option value="IN" >
+                            India                        </option>
+                                            <option value="ID" selected>
+                            Indonesia                        </option>
+                                            <option value="IR" >
+                            Iran, Islamic Republic Of                        </option>
+                                            <option value="IQ" >
+                            Iraq                        </option>
+                                            <option value="IE" >
+                            Ireland                        </option>
+                                            <option value="IM" >
+                            Isle Of Man                        </option>
+                                            <option value="IL" >
+                            Israel                        </option>
+                                            <option value="IT" >
+                            Italy                        </option>
+                                            <option value="JM" >
+                            Jamaica                        </option>
+                                            <option value="JP" >
+                            Japan                        </option>
+                                            <option value="JE" >
+                            Jersey                        </option>
+                                            <option value="JO" >
+                            Jordan                        </option>
+                                            <option value="KZ" >
+                            Kazakhstan                        </option>
+                                            <option value="KE" >
+                            Kenya                        </option>
+                                            <option value="KI" >
+                            Kiribati                        </option>
+                                            <option value="KP" >
+                            Korea, Democratic People&#039;S Republic Of                        </option>
+                                            <option value="KR" >
+                            Korea, Republic Of                        </option>
+                                            <option value="KW" >
+                            Kuwait                        </option>
+                                            <option value="KG" >
+                            Kyrgyzstan                        </option>
+                                            <option value="LA" >
+                            Lao People&#039;S Democratic Republic                        </option>
+                                            <option value="LV" >
+                            Latvia                        </option>
+                                            <option value="LB" >
+                            Lebanon                        </option>
+                                            <option value="LS" >
+                            Lesotho                        </option>
+                                            <option value="LR" >
+                            Liberia                        </option>
+                                            <option value="LY" >
+                            Libyan Arab Jamahiriya                        </option>
+                                            <option value="LI" >
+                            Liechtenstein                        </option>
+                                            <option value="LT" >
+                            Lithuania                        </option>
+                                            <option value="LU" >
+                            Luxembourg                        </option>
+                                            <option value="MO" >
+                            Macao                        </option>
+                                            <option value="MK" >
+                            Macedonia, The Former Yugoslav Republic Of                        </option>
+                                            <option value="MG" >
+                            Madagascar                        </option>
+                                            <option value="MW" >
+                            Malawi                        </option>
+                                            <option value="MY" >
+                            Malaysia                        </option>
+                                            <option value="MV" >
+                            Maldives                        </option>
+                                            <option value="ML" >
+                            Mali                        </option>
+                                            <option value="MT" >
+                            Malta                        </option>
+                                            <option value="MH" >
+                            Marshall Islands                        </option>
+                                            <option value="MQ" >
+                            Martinique                        </option>
+                                            <option value="MR" >
+                            Mauritania                        </option>
+                                            <option value="MU" >
+                            Mauritius                        </option>
+                                            <option value="YT" >
+                            Mayotte                        </option>
+                                            <option value="MX" >
+                            Mexico                        </option>
+                                            <option value="FM" >
+                            Micronesia, Federated States Of                        </option>
+                                            <option value="MD" >
+                            Moldova, Republic Of                        </option>
+                                            <option value="MC" >
+                            Monaco                        </option>
+                                            <option value="MN" >
+                            Mongolia                        </option>
+                                            <option value="ME" >
+                            Montenegro                        </option>
+                                            <option value="MS" >
+                            Montserrat                        </option>
+                                            <option value="MA" >
+                            Morocco                        </option>
+                                            <option value="MZ" >
+                            Mozambique                        </option>
+                                            <option value="MM" >
+                            Myanmar                        </option>
+                                            <option value="NA" >
+                            Namibia                        </option>
+                                            <option value="NR" >
+                            Nauru                        </option>
+                                            <option value="NP" >
+                            Nepal                        </option>
+                                            <option value="NL" >
+                            Netherlands                        </option>
+                                            <option value="AN" >
+                            Netherlands Antilles                        </option>
+                                            <option value="NC" >
+                            New Caledonia                        </option>
+                                            <option value="NZ" >
+                            New Zealand                        </option>
+                                            <option value="NI" >
+                            Nicaragua                        </option>
+                                            <option value="NE" >
+                            Niger                        </option>
+                                            <option value="NG" >
+                            Nigeria                        </option>
+                                            <option value="NU" >
+                            Niue                        </option>
+                                            <option value="NF" >
+                            Norfolk Island                        </option>
+                                            <option value="MP" >
+                            Northern Mariana Islands                        </option>
+                                            <option value="NO" >
+                            Norway                        </option>
+                                            <option value="OM" >
+                            Oman                        </option>
+                                            <option value="PK" >
+                            Pakistan                        </option>
+                                            <option value="PW" >
+                            Palau                        </option>
+                                            <option value="PS" >
+                            Palestinian Territory, Occupied                        </option>
+                                            <option value="PA" >
+                            Panama                        </option>
+                                            <option value="PG" >
+                            Papua New Guinea                        </option>
+                                            <option value="PY" >
+                            Paraguay                        </option>
+                                            <option value="PE" >
+                            Peru                        </option>
+                                            <option value="PH" >
+                            Philippines                        </option>
+                                            <option value="PN" >
+                            Pitcairn                        </option>
+                                            <option value="PL" >
+                            Poland                        </option>
+                                            <option value="PT" >
+                            Portugal                        </option>
+                                            <option value="PR" >
+                            Puerto Rico                        </option>
+                                            <option value="QA" >
+                            Qatar                        </option>
+                                            <option value="RE" >
+                            Reunion                        </option>
+                                            <option value="RO" >
+                            Romania                        </option>
+                                            <option value="RU" >
+                            Russian Federation                        </option>
+                                            <option value="RW" >
+                            Rwanda                        </option>
+                                            <option value="BL" >
+                            Saint Bartelemey                        </option>
+                                            <option value="SH" >
+                            Saint Helena                        </option>
+                                            <option value="KN" >
+                            Saint Kitts And Nevis                        </option>
+                                            <option value="LC" >
+                            Saint Lucia                        </option>
+                                            <option value="MF" >
+                            Saint Martin                        </option>
+                                            <option value="PM" >
+                            Saint Pierre And Miquelon                        </option>
+                                            <option value="VC" >
+                            Saint Vincent And The Grenadines                        </option>
+                                            <option value="WS" >
+                            Samoa                        </option>
+                                            <option value="SM" >
+                            San Marino                        </option>
+                                            <option value="ST" >
+                            Sao Tome And Principe                        </option>
+                                            <option value="SA" >
+                            Saudi Arabia                        </option>
+                                            <option value="SN" >
+                            Senegal                        </option>
+                                            <option value="RS" >
+                            Serbia                        </option>
+                                            <option value="CS" >
+                            Serbia And Montenegro                        </option>
+                                            <option value="SC" >
+                            Seychelles                        </option>
+                                            <option value="SL" >
+                            Sierra Leone                        </option>
+                                            <option value="SG" >
+                            Singapore                        </option>
+                                            <option value="SX" >
+                            Sint Maarten                        </option>
+                                            <option value="SK" >
+                            Slovakia                        </option>
+                                            <option value="SI" >
+                            Slovenia                        </option>
+                                            <option value="SB" >
+                            Solomon Islands                        </option>
+                                            <option value="SO" >
+                            Somalia                        </option>
+                                            <option value="ZA" >
+                            South Africa                        </option>
+                                            <option value="GS" >
+                            South Georgia And The South Sandwich Islands                        </option>
+                                            <option value="SS" >
+                            South Sudan                        </option>
+                                            <option value="ES" >
+                            Spain                        </option>
+                                            <option value="LK" >
+                            Sri Lanka                        </option>
+                                            <option value="SD" >
+                            Sudan                        </option>
+                                            <option value="SR" >
+                            Suriname                        </option>
+                                            <option value="SJ" >
+                            Svalbard And Jan Mayen                        </option>
+                                            <option value="SZ" >
+                            Swaziland                        </option>
+                                            <option value="SE" >
+                            Sweden                        </option>
+                                            <option value="CH" >
+                            Switzerland                        </option>
+                                            <option value="SY" >
+                            Syrian Arab Republic                        </option>
+                                            <option value="TW" >
+                            Taiwan, Province Of China                        </option>
+                                            <option value="TJ" >
+                            Tajikistan                        </option>
+                                            <option value="TZ" >
+                            Tanzania, United Republic Of                        </option>
+                                            <option value="TH" >
+                            Thailand                        </option>
+                                            <option value="TL" >
+                            Timor-Leste                        </option>
+                                            <option value="TG" >
+                            Togo                        </option>
+                                            <option value="TK" >
+                            Tokelau                        </option>
+                                            <option value="TO" >
+                            Tonga                        </option>
+                                            <option value="TT" >
+                            Trinidad And Tobago                        </option>
+                                            <option value="TN" >
+                            Tunisia                        </option>
+                                            <option value="TR" >
+                            Turkey                        </option>
+                                            <option value="TM" >
+                            Turkmenistan                        </option>
+                                            <option value="TC" >
+                            Turks And Caicos Islands                        </option>
+                                            <option value="TV" >
+                            Tuvalu                        </option>
+                                            <option value="UG" >
+                            Uganda                        </option>
+                                            <option value="UA" >
+                            Ukraine                        </option>
+                                            <option value="AE" >
+                            United Arab Emirates                        </option>
+                                            <option value="GB" >
+                            United Kingdom                        </option>
+                                            <option value="US" >
+                            United States                        </option>
+                                            <option value="UM" >
+                            United States Minor Outlying Islands                        </option>
+                                            <option value="UY" >
+                            Uruguay                        </option>
+                                            <option value="UZ" >
+                            Uzbekistan                        </option>
+                                            <option value="VU" >
+                            Vanuatu                        </option>
+                                            <option value="VE" >
+                            Venezuela                        </option>
+                                            <option value="VN" >
+                            Viet Nam                        </option>
+                                            <option value="VG" >
+                            Virgin Islands, British                        </option>
+                                            <option value="VI" >
+                            Virgin Islands, U.S.                        </option>
+                                            <option value="WF" >
+                            Wallis And Futuna                        </option>
+                                            <option value="EH" >
+                            Western Sahara                        </option>
+                                            <option value="YE" >
+                            Yemen                        </option>
+                                            <option value="ZM" >
+                            Zambia                        </option>
+                                            <option value="ZW" >
+                            Zimbabwe                        </option>
+                                    </select>
+            </div>
+
+            <div class="lg:col-span-2">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Alamat</label>
+                <textarea name="alamat" rows="3" class="w-full rounded-xl border border-slate-300 px-4 py-3"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Wilayah PDDikti</label>
+
+                <input type="hidden" name="id_wilayah_feeder" id="id_wilayah_feeder">
+
+                <div class="relative">
+                    <input type="text" id="cari_wilayah" placeholder="Ketik minimal 2 huruf, contoh: Duren Sawit"
+                        autocomplete="off" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+
+                    <div id="hasil_wilayah"
+                        class="hidden absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
+                    </div>
+                </div>
+
+                <p class="text-xs text-slate-500 mt-1">
+                    Ketik nama kecamatan/kota/wilayah, lalu pilih dari hasil pencarian.
+                </p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Kode Pos</label>
+                <input type="text" name="kode_pos" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                <input type="email" name="email" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">No. HP / WhatsApp</label>
+                <input type="text" name="no_hp" placeholder="628xxxxxxxxxx"
+                    class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Alat Transportasi</label>
+                <select name="id_alat_transportasi_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                    <option value="">-- Pilih Transportasi --</option>
+                                            <option value="7">
+                            Andong/bendi/sado/dokar/delman/becak                        </option>
+                                            <option value="3">
+                            Angkutan umum/bus/pete-pete                        </option>
+                                            <option value="1">
+                            Jalan kaki                        </option>
+                                            <option value="5">
+                            Kereta api                        </option>
+                                            <option value="11">
+                            Kuda                        </option>
+                                            <option value="99">
+                            Lainnya                        </option>
+                                            <option value="14">
+                            Mobil pribadi                        </option>
+                                            <option value="4">
+                            Mobil/bus antar jemput                        </option>
+                                            <option value="6">
+                            Ojek                        </option>
+                                            <option value="8">
+                            Perahu penyeberangan/rakit/getek                        </option>
+                                            <option value="12">
+                            Sepeda                        </option>
+                                            <option value="13">
+                            Sepeda motor                        </option>
+                                    </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Foto</label>
+                <input type="file" name="foto" accept="image/png, image/jpeg, image/jpg"
+                    class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div class="lg:col-span-2 pt-4">
+                <h3 class="text-lg font-bold text-slate-800 mb-2">Asal Sekolah & Orang Tua</h3>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Asal Sekolah</label>
+                <input type="text" name="asal_sekolah" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Tahun Lulus</label>
+                <input type="number" name="tahun_lulus" min="1980" max="2100"
+                    class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Ayah</label>
+                <input type="text" name="nama_ayah" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Ibu</label>
+                <input type="text" name="nama_ibu" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Pekerjaan Ayah</label>
+                <select name="id_pekerjaan_ayah_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                    <option value="">-- Pilih Pekerjaan Ayah --</option>
+                                            <option value="11">
+                            Buruh                        </option>
+                                            <option value="6">
+                            Karyawan Swasta                        </option>
+                                            <option value="99">
+                            Lainnya                        </option>
+                                            <option value="15">
+                            Magang                        </option>
+                                            <option value="2">
+                            Nelayan                        </option>
+                                            <option value="8">
+                            Pedagang Besar                        </option>
+                                            <option value="7">
+                            Pedagang Kecil                        </option>
+                                            <option value="13">
+                            Peneliti                        </option>
+                                            <option value="12">
+                            Pensiunan                        </option>
+                                            <option value="3">
+                            Petani                        </option>
+                                            <option value="4">
+                            Peternak                        </option>
+                                            <option value="17">
+                            Pimpinan / Manajerial                        </option>
+                                            <option value="5">
+                            PNS/TNI/Polri                        </option>
+                                            <option value="98">
+                            Sudah Meninggal                        </option>
+                                            <option value="16">
+                            Tenaga Pengajar / Instruktur / Fasiltator                        </option>
+                                            <option value="1">
+                            Tidak bekerja                        </option>
+                                            <option value="14">
+                            Tim Ahli / Konsultan                        </option>
+                                            <option value="9">
+                            Wiraswasta                        </option>
+                                            <option value="10">
+                            Wirausaha                        </option>
+                                    </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Pekerjaan Ibu</label>
+                <select name="id_pekerjaan_ibu_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                    <option value="">-- Pilih Pekerjaan Ibu --</option>
+                                            <option value="11">
+                            Buruh                        </option>
+                                            <option value="6">
+                            Karyawan Swasta                        </option>
+                                            <option value="99">
+                            Lainnya                        </option>
+                                            <option value="15">
+                            Magang                        </option>
+                                            <option value="2">
+                            Nelayan                        </option>
+                                            <option value="8">
+                            Pedagang Besar                        </option>
+                                            <option value="7">
+                            Pedagang Kecil                        </option>
+                                            <option value="13">
+                            Peneliti                        </option>
+                                            <option value="12">
+                            Pensiunan                        </option>
+                                            <option value="3">
+                            Petani                        </option>
+                                            <option value="4">
+                            Peternak                        </option>
+                                            <option value="17">
+                            Pimpinan / Manajerial                        </option>
+                                            <option value="5">
+                            PNS/TNI/Polri                        </option>
+                                            <option value="98">
+                            Sudah Meninggal                        </option>
+                                            <option value="16">
+                            Tenaga Pengajar / Instruktur / Fasiltator                        </option>
+                                            <option value="1">
+                            Tidak bekerja                        </option>
+                                            <option value="14">
+                            Tim Ahli / Konsultan                        </option>
+                                            <option value="9">
+                            Wiraswasta                        </option>
+                                            <option value="10">
+                            Wirausaha                        </option>
+                                    </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Penghasilan Ayah</label>
+                <select name="id_penghasilan_ayah_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                    <option value="">-- Pilih Penghasilan Ayah --</option>
+                                            <option value="11">
+                            Kurang dari Rp. 500,000                        </option>
+                                            <option value="16">
+                            Lebih dari Rp. 20,000,000                        </option>
+                                            <option value="13">
+                            Rp. 1,000,000 - Rp. 1,999,999                        </option>
+                                            <option value="14">
+                            Rp. 2,000,000 - Rp. 4,999,999                        </option>
+                                            <option value="15">
+                            Rp. 5,000,000 - Rp. 20,000,000                        </option>
+                                            <option value="12">
+                            Rp. 500,000 - Rp. 999,999                        </option>
+                                    </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Penghasilan Ibu</label>
+                <select name="id_penghasilan_ibu_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                    <option value="">-- Pilih Penghasilan Ibu --</option>
+                                            <option value="11">
+                            Kurang dari Rp. 500,000                        </option>
+                                            <option value="16">
+                            Lebih dari Rp. 20,000,000                        </option>
+                                            <option value="13">
+                            Rp. 1,000,000 - Rp. 1,999,999                        </option>
+                                            <option value="14">
+                            Rp. 2,000,000 - Rp. 4,999,999                        </option>
+                                            <option value="15">
+                            Rp. 5,000,000 - Rp. 20,000,000                        </option>
+                                            <option value="12">
+                            Rp. 500,000 - Rp. 999,999                        </option>
+                                    </select>
+            </div>
+
+            <div class="lg:col-span-2 pt-4">
+                <h3 class="text-lg font-bold text-slate-800 mb-2">Akun Login</h3>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Username <span
+                        class="text-red-600">*</span></label>
+                <input type="text" name="username" required class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Password Awal <span
+                        class="text-red-600">*</span></label>
+                <input type="text" name="password" required class="w-full rounded-xl border border-slate-300 px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Status Akun</label>
+                <select name="status" class="w-full rounded-xl border border-slate-300 px-4 py-3">
+                    <option value="aktif">Aktif</option>
+                    <option value="nonaktif">Nonaktif</option>
+                </select>
+            </div>
+
+            <div class="lg:col-span-2 flex flex-col sm:flex-row gap-3 pt-4">
+                <button type="submit"
+                    class="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-semibold">
+                    <i class="fa-solid fa-save mr-2"></i>
+                    Simpan
+                </button>
+
+                <a href="data_mahasiswa.php"
+                    class="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-slate-700 hover:bg-slate-800 text-white font-semibold">
+                    <i class="fa-solid fa-arrow-left mr-2"></i>
+                    Kembali
+                </a>
+            </div>
+
+        </form>
+
+    </section>
+
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.getElementById('cari_wilayah');
+        const hidden = document.getElementById('id_wilayah_feeder');
+        const resultBox = document.getElementById('hasil_wilayah');
+
+        let timer = null;
+
+        input.addEventListener('keyup', function () {
+            const q = input.value.trim();
+
+            hidden.value = '';
+
+            if (q.length < 2) {
+                resultBox.classList.add('hidden');
+                resultBox.innerHTML = '';
+                return;
+            }
+
+            clearTimeout(timer);
+
+            timer = setTimeout(function () {
+                fetch('ajax_cari_wilayah.php?q=' + encodeURIComponent(q))
+                    .then(response => response.json())
+                    .then(data => {
+                        resultBox.innerHTML = '';
+
+                        if (data.length === 0) {
+                            resultBox.innerHTML = `
+                            <div class="px-4 py-3 text-sm text-slate-500">
+                                Wilayah tidak ditemukan
+                            </div>
+                        `;
+                            resultBox.classList.remove('hidden');
+                            return;
+                        }
+
+                        data.forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'px-4 py-3 text-sm cursor-pointer hover:bg-blue-50 border-b border-slate-100';
+                            div.textContent = item.text;
+
+                            div.addEventListener('click', function () {
+                                input.value = item.text;
+                                hidden.value = item.id;
+                                resultBox.classList.add('hidden');
+                                resultBox.innerHTML = '';
+                            });
+
+                            resultBox.appendChild(div);
+                        });
+
+                        resultBox.classList.remove('hidden');
+                    });
+            }, 400);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!input.contains(e.target) && !resultBox.contains(e.target)) {
+                resultBox.classList.add('hidden');
+            }
+        });
+    });
+</script>
+
+<footer class="lg:ml-[270px] px-4 sm:px-6 lg:px-8 py-6 text-center text-sm text-slate-500">
+  Copyright  &copy; 2026 SIAKAD ATITB. All rights reserved.
+</footer>
+
+</body>
+</html>

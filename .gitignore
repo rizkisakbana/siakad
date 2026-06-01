@@ -1,0 +1,10 @@
+.env
+*.log
+logs/
+admin/backup/database/
+uploads/*
+!uploads/.gitkeep
+vendor/
+composer.phar
+siakad-atitb V1.zip
+siakad_atitb.sql
