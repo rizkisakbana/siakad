@@ -1,9 +1,10 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../vendor/autoload.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/mahasiswa_helper.php";
+require_once __DIR__ . "/../../vendor/autoload.php";
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -14,7 +15,9 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
 
-$query = mysqli_query($conn, "
+/** @var mysqli $conn */
+
+$data_mahasiswa = mahasiswa_fetch_all($conn, "
     SELECT 
         mahasiswa.*,
         prodi.kode_prodi,
@@ -98,7 +101,7 @@ foreach ($headers as $header) {
 $rowNumber = 6;
 $no = 1;
 
-while ($row = mysqli_fetch_assoc($query)) {
+foreach ($data_mahasiswa as $row) {
     $jenis_kelamin = '-';
 
     if (($row['jenis_kelamin'] ?? '') == 'L') {

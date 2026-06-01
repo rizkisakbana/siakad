@@ -1,8 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/dosen_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -40,27 +43,27 @@ if (!empty($filter_status)) {
     $where .= " AND dosen.status = '$filter_status'";
 }
 
-$total_dosen = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_dosen = dosen_count($conn, "
     SELECT COUNT(*) AS total FROM dosen
-"))['total'] ?? 0;
+");
 
-$total_aktif = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_aktif = dosen_count($conn, "
     SELECT COUNT(*) AS total FROM dosen WHERE status = 'aktif'
-"))['total'] ?? 0;
+");
 
-$total_nonaktif = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_nonaktif = dosen_count($conn, "
     SELECT COUNT(*) AS total FROM dosen WHERE status = 'nonaktif'
-"))['total'] ?? 0;
+");
 
-$total_prodi = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_prodi = dosen_count($conn, "
     SELECT COUNT(DISTINCT id_prodi) AS total FROM dosen WHERE id_prodi IS NOT NULL
-"))['total'] ?? 0;
+");
 
-$total_feeder = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_feeder = dosen_count($conn, "
     SELECT COUNT(*) AS total FROM dosen WHERE COALESCE(NULLIF(id_dosen_feeder, ''), NULLIF(id_feeder, ''), '') <> ''
-"))['total'] ?? 0;
+");
 
-$data_prodi = mysqli_query($conn, "
+$data_prodi = dosen_fetch_all($conn, "
     SELECT * FROM prodi 
     WHERE status = 'aktif'
     ORDER BY nama_prodi ASC
@@ -75,17 +78,17 @@ if ($page < 1) {
 
 $offset = ($page - 1) * $limit;
 
-$total_data_filter = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_data_filter = dosen_count($conn, "
     SELECT COUNT(*) AS total
     FROM dosen
     LEFT JOIN prodi ON dosen.id_prodi = prodi.id_prodi
     LEFT JOIN users ON dosen.id_user = users.id_user
     $where
-"))['total'] ?? 0;
+");
 
 $total_page = ceil($total_data_filter / $limit);
 
-$data_dosen = mysqli_query($conn, "
+$data_dosen = dosen_fetch_all($conn, "
     SELECT 
         dosen.*,
         prodi.kode_prodi,
@@ -108,9 +111,9 @@ $query_string = http_build_query([
     'status' => $filter_status
 ]);
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -230,11 +233,11 @@ require_once "../../includes/navbar.php";
             <select name="prodi"
                 class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-2 focus:ring-blue-600 outline-none">
                 <option value="0">Semua Prodi</option>
-                <?php while ($prodi = mysqli_fetch_assoc($data_prodi)): ?>
+                <?php foreach ($data_prodi as $prodi): ?>
                     <option value="<?= $prodi['id_prodi']; ?>" <?= $filter_prodi == $prodi['id_prodi'] ? 'selected' : ''; ?>>
                         <?= htmlspecialchars($prodi['nama_prodi']); ?> - <?= htmlspecialchars($prodi['jenjang']); ?>
                     </option>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </select>
 
             <select name="status"
@@ -268,18 +271,18 @@ require_once "../../includes/navbar.php";
                 </thead>
 
                 <tbody class="divide-y divide-slate-100">
-                    <?php if (mysqli_num_rows($data_dosen) > 0): ?>
+                    <?php if (!empty($data_dosen)): ?>
                         <?php $no = $offset + 1; ?>
-                        <?php while ($row = mysqli_fetch_assoc($data_dosen)): ?>
+                        <?php foreach ($data_dosen as $row): ?>
 
                             <?php
                             $id_dosen = intval($row['id_dosen']);
 
-                            $cek_jadwal = mysqli_fetch_assoc(mysqli_query($conn, "
+                            $cek_jadwal = dosen_count($conn, "
                                     SELECT COUNT(*) AS total 
                                     FROM jadwal_kuliah 
                                     WHERE id_dosen = '$id_dosen'
-                                "))['total'] ?? 0;
+                                ");
 
                             $foto_dosen = $row['foto'] ?? '';
                             $foto_user = $row['foto_user'] ?? '';
@@ -412,7 +415,7 @@ require_once "../../includes/navbar.php";
                                 </td>
                             </tr>
 
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
                             <td colspan="8" class="px-4 py-10 text-center text-slate-500">
@@ -474,4 +477,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

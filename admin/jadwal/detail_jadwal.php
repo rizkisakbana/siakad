@@ -1,7 +1,10 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/alert.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/jadwal_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -13,7 +16,7 @@ if ($id_jadwal <= 0) {
     exit;
 }
 
-$q = mysqli_query($conn, "
+$data = jadwal_query_one($conn, "
     SELECT j.*, ta.tahun, ta.semester AS semester_tahun, k.nama_kelas, k.kode_kelas,
            mk.kode_mk, mk.nama_mk, mk.total_sks, d.nama_dosen, r.nama_ruangan,
            kk.id_kelas_kuliah AS id_kk, kk.id_kelas_kuliah_feeder AS feeder_kk
@@ -28,17 +31,15 @@ $q = mysqli_query($conn, "
     LIMIT 1
 ");
 
-if (!$q || mysqli_num_rows($q) < 1) {
+if (!$data) {
     set_alert('error', 'Data jadwal tidak ditemukan.');
     header('Location: data_jadwal.php');
     exit;
 }
 
-$data = mysqli_fetch_assoc($q);
-
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -82,4 +83,4 @@ require_once "../../includes/navbar.php";
     </section>
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

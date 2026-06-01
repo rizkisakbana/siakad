@@ -1,7 +1,10 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/log_aktivitas_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik', 'admin_keuangan']);
@@ -22,22 +25,22 @@ if (!empty($keyword)) {
     ";
 }
 
-$total_log = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_log = aktivitas_count($conn, "
     SELECT COUNT(*) AS total
     FROM log_aktivitas
-"))['total'] ?? 0;
+");
 
-$total_hari_ini = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_hari_ini = aktivitas_count($conn, "
     SELECT COUNT(*) AS total
     FROM log_aktivitas
     WHERE DATE(created_at)=CURDATE()
-"))['total'] ?? 0;
+");
 
-$total_login = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_login = aktivitas_count($conn, "
     SELECT COUNT(*) AS total
     FROM log_aktivitas
     WHERE aktivitas LIKE '%login%'
-"))['total'] ?? 0;
+");
 
 $limit = 10;
 $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
@@ -48,17 +51,17 @@ if ($page < 1) {
 
 $offset = ($page - 1) * $limit;
 
-$total_data_filter = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_data_filter = aktivitas_count($conn, "
     SELECT COUNT(*) AS total
     FROM log_aktivitas
     LEFT JOIN users 
         ON log_aktivitas.id_user = users.id_user
     $where
-"))['total'] ?? 0;
+");
 
 $total_page = ceil($total_data_filter / $limit);
 
-$data_log = mysqli_query($conn, "
+$data_log = aktivitas_fetch_all($conn, "
     SELECT 
         log_aktivitas.*,
         users.nama_lengkap,
@@ -71,9 +74,9 @@ $data_log = mysqli_query($conn, "
     LIMIT $limit OFFSET $offset
 ");
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -201,10 +204,10 @@ require_once "../../includes/navbar.php";
 
                 <tbody class="divide-y divide-slate-100">
 
-                    <?php if (mysqli_num_rows($data_log) > 0): ?>
+                    <?php if (!empty($data_log)): ?>
 
                         <?php $no = $offset + 1; ?>
-                        <?php while ($row = mysqli_fetch_assoc($data_log)): ?>
+                        <?php foreach ($data_log as $row): ?>
 
                             <tr class="hover:bg-slate-50">
 
@@ -282,7 +285,7 @@ require_once "../../includes/navbar.php";
 
                             </tr>
 
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
 
                     <?php else: ?>
 
@@ -355,4 +358,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

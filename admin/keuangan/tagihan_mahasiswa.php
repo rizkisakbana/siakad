@@ -1,8 +1,10 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/internal_module_helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/internal_module_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_keuangan']);
@@ -18,7 +20,7 @@ $cards = [
 ];
 
 $rows = [];
-$q = mysqli_query($conn, "
+$data_tagihan = internal_fetch_all($conn, "
     SELECT t.*, m.nim, m.nama_mahasiswa, jb.nama_biaya, ta.tahun, ta.semester
     FROM tagihan_mahasiswa t
     JOIN mahasiswa m ON m.id_mahasiswa = t.id_mahasiswa
@@ -28,22 +30,20 @@ $q = mysqli_query($conn, "
     LIMIT 25
 ");
 
-if ($q) {
-    while ($r = mysqli_fetch_assoc($q)) {
-        $rows[] = [
-            htmlspecialchars($r['nomor_tagihan'] ?? '-'),
-            htmlspecialchars(($r['nim'] ?? '-') . ' - ' . ($r['nama_mahasiswa'] ?? '-')),
-            htmlspecialchars($r['nama_biaya'] ?? '-'),
-            htmlspecialchars(trim(($r['tahun'] ?? '') . ' ' . ($r['semester'] ?? '')) ?: '-'),
-            rupiah_internal($r['total_tagihan'] ?? 0),
-            internal_badge($r['status_tagihan'] ?? '-'),
-        ];
-    }
+foreach ($data_tagihan as $r) {
+    $rows[] = [
+        htmlspecialchars($r['nomor_tagihan'] ?? '-'),
+        htmlspecialchars(($r['nim'] ?? '-') . ' - ' . ($r['nama_mahasiswa'] ?? '-')),
+        htmlspecialchars($r['nama_biaya'] ?? '-'),
+        htmlspecialchars(trim(($r['tahun'] ?? '') . ' ' . ($r['semester'] ?? '')) ?: '-'),
+        rupiah_internal($r['total_tagihan'] ?? 0),
+        internal_badge($r['status_tagihan'] ?? '-'),
+    ];
 }
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 show_alert();
 render_internal_page('Tagihan Mahasiswa', 'Monitoring tagihan, pembayaran, dan status pelunasan mahasiswa.', $cards, ['No. Tagihan', 'Mahasiswa', 'Jenis Biaya', 'Periode', 'Total', 'Status'], $rows, 'Belum ada tagihan mahasiswa.');
-require_once "../../includes/footer.php";
+require_once __DIR__ . "/../../includes/footer.php";

@@ -1,10 +1,13 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/email_gateway.php";
-require_once "../../includes/whatsapp_gateway.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/email_gateway.php";
+require_once __DIR__ . "/../../includes/whatsapp_gateway.php";
+require_once __DIR__ . "/dosen_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -17,7 +20,7 @@ if ($id_dosen <= 0) {
     exit;
 }
 
-$cek = mysqli_query($conn, "
+$data = dosen_query_one($conn, "
     SELECT 
         dosen.*,
         users.username,
@@ -30,19 +33,17 @@ $cek = mysqli_query($conn, "
     LIMIT 1
 ");
 
-if (mysqli_num_rows($cek) < 1) {
+if (!$data) {
     set_alert("error", "Data dosen tidak ditemukan.");
     header("Location: data_dosen.php");
     exit;
 }
 
-$data = mysqli_fetch_assoc($cek);
-
-$cek_jadwal = mysqli_fetch_assoc(mysqli_query($conn, "
+$cek_jadwal = dosen_count($conn, "
     SELECT COUNT(*) AS total
     FROM jadwal_kuliah
     WHERE id_dosen = '$id_dosen'
-"))['total'] ?? 0;
+");
 
 if ($cek_jadwal > 0) {
     set_alert("warning", "Dosen tidak dapat dihapus karena sudah digunakan pada jadwal kuliah.");

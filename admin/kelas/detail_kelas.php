@@ -1,9 +1,12 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/kelas_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -19,7 +22,7 @@ if ($id_kelas <= 0) {
     exit;
 }
 
-$query = mysqli_query($conn, "
+$data = kelas_query_one($conn, "
     SELECT 
         kelas.*,
         prodi.kode_prodi,
@@ -36,31 +39,29 @@ $query = mysqli_query($conn, "
     LIMIT 1
 ");
 
-if (mysqli_num_rows($query) < 1) {
+if (!$data) {
     set_alert("error", "Data kelas tidak ditemukan.");
     header("Location: data_kelas.php");
     exit;
 }
 
-$data = mysqli_fetch_assoc($query);
-
-$total_mahasiswa = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_mahasiswa = kelas_count($conn, "
     SELECT COUNT(*) AS total 
     FROM mahasiswa 
     WHERE id_kelas = '$id_kelas'
-"))['total'] ?? 0;
+");
 
-$total_jadwal = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_jadwal = kelas_count($conn, "
     SELECT COUNT(*) AS total 
     FROM jadwal_kuliah 
     WHERE id_kelas = '$id_kelas'
-"))['total'] ?? 0;
+");
 
-$total_dosen = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_dosen = kelas_count($conn, "
     SELECT COUNT(DISTINCT id_dosen) AS total 
     FROM jadwal_kuliah 
     WHERE id_kelas = '$id_kelas'
-"))['total'] ?? 0;
+");
 
 $sisa_kapasitas = intval($data['kapasitas'] ?? 0) - intval($total_mahasiswa);
 if ($sisa_kapasitas < 0) {
@@ -74,9 +75,9 @@ simpan_log(
     "Kelas"
 );
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -321,4 +322,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

@@ -22,6 +22,32 @@ function internal_sum($conn, $sql)
     return (float)($row['total'] ?? 0);
 }
 
+function internal_query_one($conn, $sql)
+{
+    $q = mysqli_query($conn, $sql);
+    if (!$q || mysqli_num_rows($q) < 1) {
+        return null;
+    }
+
+    return mysqli_fetch_assoc($q);
+}
+
+function internal_fetch_all($conn, $sql)
+{
+    $q = mysqli_query($conn, $sql);
+    $items = [];
+
+    if (!$q) {
+        return $items;
+    }
+
+    while ($row = mysqli_fetch_assoc($q)) {
+        $items[] = $row;
+    }
+
+    return $items;
+}
+
 function rupiah_internal($value)
 {
     return 'Rp ' . number_format((float)$value, 0, ',', '.');

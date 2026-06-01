@@ -1,9 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/internal_module_helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/internal_module_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -24,7 +26,7 @@ $cards = [
     ['label' => 'Lulus/DO', 'value' => number_format(internal_count($conn, "SELECT COUNT(*) total FROM mahasiswa_lulus_do"))],
 ];
 
-$q = mysqli_query($conn, "
+$data_transkrip = internal_fetch_all($conn, "
     SELECT
         m.id_mahasiswa,
         m.nim,
@@ -66,9 +68,9 @@ $q = mysqli_query($conn, "
     LIMIT 100
 ");
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -117,8 +119,8 @@ require_once "../../includes/navbar.php";
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                    <?php if ($q && mysqli_num_rows($q) > 0): ?>
-                        <?php while ($r = mysqli_fetch_assoc($q)): ?>
+                    <?php if (!empty($data_transkrip)): ?>
+                        <?php foreach ($data_transkrip as $r): ?>
                             <tr class="hover:bg-slate-50">
                                 <td class="px-4 py-3 font-semibold text-slate-800"><?= htmlspecialchars($r['nim'] ?? '-'); ?></td>
                                 <td class="px-4 py-3"><?= htmlspecialchars($r['nama_mahasiswa'] ?? '-'); ?></td>
@@ -133,7 +135,7 @@ require_once "../../includes/navbar.php";
                                     </a>
                                 </td>
                             </tr>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
                             <td colspan="8" class="px-4 py-10 text-center text-slate-500">Belum ada data transkrip.</td>
@@ -145,4 +147,4 @@ require_once "../../includes/navbar.php";
     </section>
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

@@ -1,14 +1,16 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/upload.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/notification.php";
-require_once "../../includes/email_gateway.php";
-require_once "../../includes/whatsapp_gateway.php";
-require_once "dosen_helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/upload.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/notification.php";
+require_once __DIR__ . "/../../includes/email_gateway.php";
+require_once __DIR__ . "/../../includes/whatsapp_gateway.php";
+require_once __DIR__ . "/dosen_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -24,7 +26,7 @@ if ($id_dosen <= 0) {
     exit;
 }
 
-$query = mysqli_query($conn, "
+$data = dosen_query_one($conn, "
     SELECT 
         dosen.*,
         users.username,
@@ -38,15 +40,13 @@ $query = mysqli_query($conn, "
     LIMIT 1
 ");
 
-if (mysqli_num_rows($query) < 1) {
+if (!$data) {
     set_alert("error", "Data dosen tidak ditemukan.");
     header("Location: data_dosen.php");
     exit;
 }
 
-$data = mysqli_fetch_assoc($query);
-
-$data_prodi = mysqli_query($conn, "
+$data_prodi = dosen_fetch_all($conn, "
     SELECT * FROM prodi
     WHERE status = 'aktif'
     ORDER BY nama_prodi ASC
@@ -56,11 +56,11 @@ $link_login = "http://localhost/siakad-atitb/auth/login.php";
 $ref_agama = dosen_ref_options($conn, 'agama');
 $ref_ikatan = dosen_ref_options($conn, 'ikatan_kerja_sdm');
 $ref_status_aktif = dosen_ref_options($conn, 'status_keaktifan_pegawai');
-$role_dosen = mysqli_fetch_assoc(mysqli_query($conn, "
+$role_dosen = dosen_query_one($conn, "
     SELECT id_role FROM roles
     WHERE nama_role = 'dosen'
     LIMIT 1
-"));
+");
 $id_role_dosen = $role_dosen['id_role'] ?? 0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -115,9 +115,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_SESSION['alert'])) {
         $id_user = intval($data['id_user']);
 
-        $cek_user = false;
+        $cek_user_exists = false;
         if (!empty($username)) {
-            $cek_user = mysqli_query($conn, "
+            $cek_user_exists = dosen_query_exists($conn, "
                 SELECT id_user 
                 FROM users 
                 WHERE username = '$username'
@@ -126,9 +126,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
         }
 
-        $cek_email_user = false;
+        $cek_email_user_exists = false;
         if (!empty($email)) {
-            $cek_email_user = mysqli_query($conn, "
+            $cek_email_user_exists = dosen_query_exists($conn, "
                 SELECT id_user
                 FROM users
                 WHERE email = '$email'
@@ -137,10 +137,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
         }
 
-        $cek_nidn = false;
+        $cek_nidn_exists = false;
 
         if (!empty($nidn)) {
-            $cek_nidn = mysqli_query($conn, "
+            $cek_nidn_exists = dosen_query_exists($conn, "
                 SELECT id_dosen 
                 FROM dosen 
                 WHERE nidn = '$nidn'
@@ -149,9 +149,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
         }
 
-        $cek_feeder = false;
+        $cek_feeder_exists = false;
         if (!empty($id_dosen_feeder)) {
-            $cek_feeder = mysqli_query($conn, "
+            $cek_feeder_exists = dosen_query_exists($conn, "
                 SELECT id_dosen
                 FROM dosen
                 WHERE (id_dosen_feeder = '$id_dosen_feeder' OR id_feeder = '$id_dosen_feeder')
@@ -160,13 +160,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
         }
 
-        if ($cek_user && mysqli_num_rows($cek_user) > 0) {
+        if ($cek_user_exists === null) {
+            set_alert("error", "Validasi username gagal diproses.");
+        } elseif ($cek_email_user_exists === null) {
+            set_alert("error", "Validasi email gagal diproses.");
+        } elseif ($cek_nidn_exists === null) {
+            set_alert("error", "Validasi NIDN gagal diproses.");
+        } elseif ($cek_feeder_exists === null) {
+            set_alert("error", "Validasi ID dosen NeoFeeder gagal diproses.");
+        } elseif ($cek_user_exists) {
             set_alert("error", "Username sudah digunakan.");
-        } elseif ($cek_email_user && mysqli_num_rows($cek_email_user) > 0) {
+        } elseif ($cek_email_user_exists) {
             set_alert("error", "Email sudah digunakan akun pengguna lain.");
-        } elseif ($cek_nidn && mysqli_num_rows($cek_nidn) > 0) {
+        } elseif ($cek_nidn_exists) {
             set_alert("error", "NIDN sudah digunakan.");
-        } elseif ($cek_feeder && mysqli_num_rows($cek_feeder) > 0) {
+        } elseif ($cek_feeder_exists) {
             set_alert("error", "ID dosen NeoFeeder sudah digunakan.");
         } else {
             $foto_sql = "";
@@ -411,9 +419,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -445,11 +453,11 @@ require_once "../../includes/navbar.php";
                     <label class="block text-sm font-semibold text-slate-700 mb-2">Program Studi</label>
                     <select name="id_prodi" required class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-2 focus:ring-blue-600 outline-none">
                         <option value="">-- Pilih Program Studi --</option>
-                        <?php while ($prodi = mysqli_fetch_assoc($data_prodi)): ?>
+                        <?php foreach ($data_prodi as $prodi): ?>
                             <option value="<?= $prodi['id_prodi']; ?>" <?= $data['id_prodi'] == $prodi['id_prodi'] ? 'selected' : ''; ?>>
                                 <?= htmlspecialchars($prodi['nama_prodi']); ?> - <?= htmlspecialchars($prodi['jenjang']); ?>
                             </option>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     </select>
                 </div>
 
@@ -671,4 +679,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

@@ -1,9 +1,12 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/kurikulum_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -11,7 +14,7 @@ cek_role(['super_admin', 'admin_akademik']);
 $page_title = "Tambah Kurikulum";
 $page_subtitle = "Menambahkan master kurikulum program studi";
 
-$prodi = mysqli_query($conn, "SELECT * FROM prodi WHERE status='aktif' ORDER BY nama_prodi ASC");
+$prodi = kurikulum_fetch_all($conn, "SELECT * FROM prodi WHERE status='aktif' ORDER BY nama_prodi ASC");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_prodi = intval($_POST['id_prodi'] ?? 0);
@@ -23,14 +26,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($id_prodi <= 0 || empty($nama_kurikulum) || empty($tahun_kurikulum)) {
         set_alert("error", "Program studi, nama kurikulum, dan tahun kurikulum wajib diisi.");
     } else {
-        $cek = mysqli_query($conn, "
+        $duplikat = kurikulum_query_exists($conn, "
             SELECT id_kurikulum FROM kurikulum 
             WHERE id_prodi='$id_prodi' 
             AND tahun_kurikulum='$tahun_kurikulum'
             LIMIT 1
         ");
 
-        if (mysqli_num_rows($cek) > 0) {
+        if ($duplikat === null) {
+            set_alert("error", "Validasi kurikulum gagal diproses.");
+        } elseif ($duplikat) {
             set_alert("error", "Kurikulum untuk prodi dan tahun tersebut sudah tersedia.");
         } else {
             $simpan = mysqli_query($conn, "
@@ -52,9 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -81,11 +86,11 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Program Studi</label>
                 <select name="id_prodi" required class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-2 focus:ring-blue-600 outline-none">
                     <option value="">-- Pilih Program Studi --</option>
-                    <?php while ($p = mysqli_fetch_assoc($prodi)): ?>
+                    <?php foreach ($prodi as $p): ?>
                         <option value="<?= $p['id_prodi']; ?>">
                             <?= htmlspecialchars($p['jenjang'] . ' - ' . $p['nama_prodi']); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -131,4 +136,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

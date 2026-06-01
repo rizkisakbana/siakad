@@ -1,20 +1,21 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/akademik_inti_helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/akademik_inti_helper.php";
+require_once __DIR__ . "/jadwal_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
 
-function jadwal_options($conn, $sql) { return mysqli_query($conn, $sql); }
+/** @var mysqli $conn */
 
-$tahun = jadwal_options($conn, "SELECT * FROM tahun_akademik ORDER BY status ASC, tahun DESC, semester ASC");
-$kelas = jadwal_options($conn, "SELECT k.*, p.nama_prodi FROM kelas k LEFT JOIN prodi p ON p.id_prodi=k.id_prodi WHERE k.status='aktif' ORDER BY p.nama_prodi,k.nama_kelas");
-$mk = jadwal_options($conn, "SELECT mk.*, k.nama_kurikulum, p.nama_prodi FROM mata_kuliah mk JOIN kurikulum k ON k.id_kurikulum=mk.id_kurikulum LEFT JOIN prodi p ON p.id_prodi=k.id_prodi WHERE mk.status='aktif' ORDER BY p.nama_prodi,mk.semester,mk.kode_mk");
-$dosen = jadwal_options($conn, "SELECT * FROM dosen WHERE status='aktif' ORDER BY nama_dosen");
-$ruangan = jadwal_options($conn, "SELECT * FROM ruangan WHERE status='aktif' ORDER BY nama_ruangan");
+$tahun = jadwal_fetch_all($conn, "SELECT * FROM tahun_akademik ORDER BY status ASC, tahun DESC, semester ASC");
+$kelas = jadwal_fetch_all($conn, "SELECT k.*, p.nama_prodi FROM kelas k LEFT JOIN prodi p ON p.id_prodi=k.id_prodi WHERE k.status='aktif' ORDER BY p.nama_prodi,k.nama_kelas");
+$mk = jadwal_fetch_all($conn, "SELECT mk.*, k.nama_kurikulum, p.nama_prodi FROM mata_kuliah mk JOIN kurikulum k ON k.id_kurikulum=mk.id_kurikulum LEFT JOIN prodi p ON p.id_prodi=k.id_prodi WHERE mk.status='aktif' ORDER BY p.nama_prodi,mk.semester,mk.kode_mk");
+$dosen = jadwal_fetch_all($conn, "SELECT * FROM dosen WHERE status='aktif' ORDER BY nama_dosen");
+$ruangan = jadwal_fetch_all($conn, "SELECT * FROM ruangan WHERE status='aktif' ORDER BY nama_ruangan");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_tahun = intval($_POST['id_tahun'] ?? 0);
@@ -33,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($jam_mulai >= $jam_selesai) {
         set_alert('error', 'Jam mulai harus lebih kecil dari jam selesai.');
     } else {
-        $cek = mysqli_query($conn, "
+        $bentrok = jadwal_query_exists($conn, "
             SELECT id_jadwal FROM jadwal_kuliah
             WHERE id_tahun='$id_tahun' AND hari='$hari' AND status='aktif'
             AND ('$jam_mulai' < jam_selesai AND '$jam_selesai' > jam_mulai)
@@ -41,7 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             LIMIT 1
         ");
 
-        if ($cek && mysqli_num_rows($cek) > 0) {
+        if ($bentrok === null) {
+            set_alert('error', 'Validasi bentrok jadwal gagal diproses.');
+        } elseif ($bentrok) {
             set_alert('error', 'Jadwal bentrok dengan kelas, dosen, atau ruangan lain.');
         } else {
             mysqli_begin_transaction($conn);
@@ -69,9 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -87,45 +90,45 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold mb-2">Tahun Akademik</label>
                 <select name="id_tahun" required class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">Pilih tahun</option>
-                    <?php while ($r = mysqli_fetch_assoc($tahun)): ?>
+                    <?php foreach ($tahun as $r): ?>
                         <option value="<?= $r['id_tahun']; ?>"><?= htmlspecialchars($r['tahun'].' - '.$r['semester']); ?></option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div>
                 <label class="block text-sm font-semibold mb-2">Kelas</label>
                 <select name="id_kelas" required class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">Pilih kelas</option>
-                    <?php while ($r = mysqli_fetch_assoc($kelas)): ?>
+                    <?php foreach ($kelas as $r): ?>
                         <option value="<?= $r['id_kelas']; ?>"><?= htmlspecialchars(($r['nama_prodi'] ?? '-') . ' - ' . $r['nama_kelas']); ?></option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div class="lg:col-span-2">
                 <label class="block text-sm font-semibold mb-2">Mata Kuliah</label>
                 <select name="id_mk" required class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">Pilih mata kuliah</option>
-                    <?php while ($r = mysqli_fetch_assoc($mk)): ?>
+                    <?php foreach ($mk as $r): ?>
                         <option value="<?= $r['id_mk']; ?>"><?= htmlspecialchars(($r['nama_prodi'] ?? '-') . ' - Smt ' . $r['semester'] . ' - ' . $r['kode_mk'] . ' ' . $r['nama_mk']); ?></option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div>
                 <label class="block text-sm font-semibold mb-2">Dosen</label>
                 <select name="id_dosen" required class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">Pilih dosen</option>
-                    <?php while ($r = mysqli_fetch_assoc($dosen)): ?>
+                    <?php foreach ($dosen as $r): ?>
                         <option value="<?= $r['id_dosen']; ?>"><?= htmlspecialchars($r['nama_dosen']); ?></option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div>
                 <label class="block text-sm font-semibold mb-2">Ruangan</label>
                 <select name="id_ruangan" required class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">Pilih ruangan</option>
-                    <?php while ($r = mysqli_fetch_assoc($ruangan)): ?>
+                    <?php foreach ($ruangan as $r): ?>
                         <option value="<?= $r['id_ruangan']; ?>"><?= htmlspecialchars($r['nama_ruangan']); ?></option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div>
@@ -169,4 +172,4 @@ require_once "../../includes/navbar.php";
     </section>
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

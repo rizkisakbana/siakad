@@ -1,9 +1,10 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../vendor/autoload.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/mahasiswa_helper.php";
+require_once __DIR__ . "/../../vendor/autoload.php";
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -11,7 +12,9 @@ use Dompdf\Options;
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
 
-$query = mysqli_query($conn, "
+/** @var mysqli $conn */
+
+$data_mahasiswa = mahasiswa_fetch_all($conn, "
     SELECT 
         mahasiswa.*,
         prodi.kode_prodi,
@@ -167,8 +170,8 @@ $html = '
 
 $no = 1;
 
-if ($query && mysqli_num_rows($query) > 0) {
-    while ($row = mysqli_fetch_assoc($query)) {
+if (!empty($data_mahasiswa)) {
+    foreach ($data_mahasiswa as $row) {
         $jk = '-';
 
         if (($row['jenis_kelamin'] ?? '') == 'L') {

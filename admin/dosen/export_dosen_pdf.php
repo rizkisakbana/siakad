@@ -1,9 +1,12 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../vendor/autoload.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../vendor/autoload.php";
+require_once __DIR__ . "/dosen_helper.php";
+
+/** @var mysqli $conn */
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -11,7 +14,7 @@ use Dompdf\Options;
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
 
-$query = mysqli_query($conn, "
+$data_dosen = dosen_fetch_all($conn, "
     SELECT 
         dosen.*,
         prodi.kode_prodi,
@@ -163,8 +166,8 @@ $html = '
 
 $no = 1;
 
-if (mysqli_num_rows($query) > 0) {
-    while ($row = mysqli_fetch_assoc($query)) {
+if (!empty($data_dosen)) {
+    foreach ($data_dosen as $row) {
         $nama_lengkap = trim(($row['gelar_depan'] ?? '') . ' ' . $row['nama_dosen'] . ' ' . ($row['gelar_belakang'] ?? ''));
 
         $jk = '-';

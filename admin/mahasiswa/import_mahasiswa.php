@@ -1,10 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../vendor/autoload.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/mahasiswa_helper.php";
+require_once __DIR__ . "/../../vendor/autoload.php";
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -14,11 +15,13 @@ cek_role(['super_admin', 'admin_akademik']);
 $page_title = "Import Data Mahasiswa";
 $page_subtitle = "Import data mahasiswa melalui file Excel";
 
-$role_mahasiswa = mysqli_fetch_assoc(mysqli_query($conn, "
+/** @var mysqli $conn */
+
+$role_mahasiswa = mahasiswa_query_one($conn, "
     SELECT id_role FROM roles 
     WHERE nama_role = 'mahasiswa'
     LIMIT 1
-"));
+");
 
 $id_role_mahasiswa = $role_mahasiswa['id_role'] ?? 0;
 
@@ -109,34 +112,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
 
 
-                        $q_prodi = mysqli_query($conn, "
+                        $q_prodi = mahasiswa_query_one($conn, "
                             SELECT id_prodi 
                             FROM prodi 
                             WHERE id_prodi = '$id_prodi'
                             LIMIT 1
                         ");
 
-                        if (!$q_prodi || mysqli_num_rows($q_prodi) < 1) {
+                        if (!$q_prodi) {
                             $gagal++;
                             $pesan_gagal[] = "Baris $baris: id_prodi $id_prodi tidak ditemukan.";
                             continue;
                         }
 
                         if ($id_kelas > 0) {
-                            $q_kelas = mysqli_query($conn, "
+                            $kelas = mahasiswa_query_one($conn, "
                                 SELECT id_kelas, id_prodi 
                                 FROM kelas
                                 WHERE id_kelas = '$id_kelas'
                                 LIMIT 1
                             ");
 
-                            if (!$q_kelas || mysqli_num_rows($q_kelas) < 1) {
+                            if (!$kelas) {
                                 $gagal++;
                                 $pesan_gagal[] = "Baris $baris: id_kelas $id_kelas tidak ditemukan.";
                                 continue;
                             }
-
-                            $kelas = mysqli_fetch_assoc($q_kelas);
 
                             if (intval($kelas['id_prodi']) !== $id_prodi) {
                                 $gagal++;
@@ -165,53 +166,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $nik_db = mysqli_real_escape_string($conn, $nik);
                         $email_db = mysqli_real_escape_string($conn, $email);
 
-                        $cek_user = mysqli_query($conn, "
+                        $cek_user = mahasiswa_query_exists($conn, "
                             SELECT id_user FROM users
                             WHERE username = '$username_db'
                             LIMIT 1
                         ");
 
-                        if ($cek_user && mysqli_num_rows($cek_user) > 0) {
+                        if ($cek_user) {
                             $gagal++;
                             $pesan_gagal[] = "Baris $baris: username $username sudah digunakan.";
                             continue;
                         }
 
                         if (!empty($email)) {
-                            $cek_email_user = mysqli_query($conn, "
+                            $email_terpakai = mahasiswa_query_one($conn, "
                                 SELECT username FROM users
                                 WHERE email = '$email_db'
                                 LIMIT 1
                             ");
 
-                            if ($cek_email_user && mysqli_num_rows($cek_email_user) > 0) {
-                                $email_terpakai = mysqli_fetch_assoc($cek_email_user);
+                            if ($email_terpakai) {
                                 $gagal++;
                                 $pesan_gagal[] = "Baris $baris: email $email sudah digunakan oleh username " . ($email_terpakai['username'] ?? '-') . ".";
                                 continue;
                             }
                         }
 
-                        $cek_nim = mysqli_query($conn, "
+                        $cek_nim = mahasiswa_query_exists($conn, "
                             SELECT id_mahasiswa FROM mahasiswa
                             WHERE nim = '$nim_db'
                             LIMIT 1
                         ");
 
-                        if ($cek_nim && mysqli_num_rows($cek_nim) > 0) {
+                        if ($cek_nim) {
                             $gagal++;
                             $pesan_gagal[] = "Baris $baris: NIM $nim sudah digunakan.";
                             continue;
                         }
 
                         if (!empty($nik)) {
-                            $cek_nik = mysqli_query($conn, "
+                            $cek_nik = mahasiswa_query_exists($conn, "
                                 SELECT id_mahasiswa FROM mahasiswa
                                 WHERE nik = '$nik_db'
                                 LIMIT 1
                             ");
 
-                            if ($cek_nik && mysqli_num_rows($cek_nik) > 0) {
+                            if ($cek_nik) {
                                 $gagal++;
                                 $pesan_gagal[] = "Baris $baris: NIK $nik sudah digunakan.";
                                 continue;
@@ -270,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $email_sql = !empty($email) ? "'$email_db'" : "NULL";
                         $no_hp_sql = !empty($no_hp) ? "'$no_hp_db'" : "NULL";
 
-                        $simpan_user = mysqli_query($conn, "
+                        $simpan_user = mahasiswa_execute($conn, "
                             INSERT INTO users
                             (id_role, username, password, nama_lengkap, email, no_hp, status)
                             VALUES
@@ -285,7 +285,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         $id_user_baru = mysqli_insert_id($conn);
 
-                        $simpan_mahasiswa = mysqli_query($conn, "
+                        $simpan_mahasiswa = mahasiswa_execute($conn, "
                             INSERT INTO mahasiswa
                             (
                                 id_user,
@@ -357,7 +357,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ");
 
                         if (!$simpan_mahasiswa) {
-                            mysqli_query($conn, "DELETE FROM users WHERE id_user = '$id_user_baru'");
+                            mahasiswa_execute($conn, "DELETE FROM users WHERE id_user = '$id_user_baru'");
                             $gagal++;
                             $pesan_gagal[] = "Baris $baris: gagal menyimpan data mahasiswa.";
                             continue;
@@ -400,9 +400,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -663,4 +663,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

@@ -1,7 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/log_aktivitas_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik', 'admin_keuangan']);
@@ -9,29 +13,23 @@ cek_role(['super_admin', 'admin_akademik', 'admin_keuangan']);
 $id_log = intval($_GET['id'] ?? 0);
 
 if ($id_log <= 0) {
-    echo "<script>
-        alert('ID aktivitas tidak valid.');
-        window.location='data_aktivitas.php';
-    </script>";
+    set_alert("error", "ID aktivitas tidak valid.");
+    header("Location: data_aktivitas.php");
     exit;
 }
 
-$cek = mysqli_query($conn, "
+$data = aktivitas_query_one($conn, "
     SELECT *
     FROM log_aktivitas
     WHERE id_log = '$id_log'
     LIMIT 1
 ");
 
-if (mysqli_num_rows($cek) < 1) {
-    echo "<script>
-        alert('Data aktivitas tidak ditemukan.');
-        window.location='data_aktivitas.php';
-    </script>";
+if (!$data) {
+    set_alert("error", "Data aktivitas tidak ditemukan.");
+    header("Location: data_aktivitas.php");
     exit;
 }
-
-$data = mysqli_fetch_assoc($cek);
 
 $hapus = mysqli_query($conn, "
     DELETE FROM log_aktivitas
@@ -46,16 +44,11 @@ if ($hapus) {
         "Log Aktivitas"
     );
 
-    echo "<script>
-        alert('Data aktivitas berhasil dihapus.');
-        window.location='data_aktivitas.php';
-    </script>";
+    set_alert("success", "Data aktivitas berhasil dihapus.");
+    header("Location: data_aktivitas.php");
     exit;
 } else {
-    echo "<script>
-        alert('Data aktivitas gagal dihapus.');
-        window.location='data_aktivitas.php';
-    </script>";
+    set_alert("error", "Data aktivitas gagal dihapus.");
+    header("Location: data_aktivitas.php");
     exit;
 }
-?>

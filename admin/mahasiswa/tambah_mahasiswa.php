@@ -1,13 +1,14 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/upload.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/notification.php";
-require_once "../../includes/email_gateway.php";
-require_once "../../includes/whatsapp_gateway.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/upload.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/notification.php";
+require_once __DIR__ . "/../../includes/email_gateway.php";
+require_once __DIR__ . "/../../includes/whatsapp_gateway.php";
+require_once __DIR__ . "/mahasiswa_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -15,55 +16,21 @@ cek_role(['super_admin', 'admin_akademik']);
 $page_title = "Tambah Mahasiswa";
 $page_subtitle = "Menambahkan data mahasiswa dan akun pengguna SIAKAD";
 
+/** @var mysqli $conn */
+
 function get_ref_options($conn, $jenis_ref)
 {
-    $jenis_ref = mysqli_real_escape_string($conn, $jenis_ref);
-    return mysqli_query($conn, "
-        SELECT *
-        FROM ref_pddikti
-        WHERE jenis_ref = '$jenis_ref'
-        AND status = 'aktif'
-        ORDER BY nama_ref ASC
-    ");
+    return mahasiswa_ref_options($conn, $jenis_ref);
 }
 
 function get_ref_name($conn, $jenis_ref, $id_feeder)
 {
-    if (empty($id_feeder)) {
-        return '';
-    }
-
-    $jenis_ref = mysqli_real_escape_string($conn, $jenis_ref);
-    $id_feeder = mysqli_real_escape_string($conn, $id_feeder);
-
-    $q = mysqli_query($conn, "
-        SELECT nama_ref
-        FROM ref_pddikti
-        WHERE jenis_ref = '$jenis_ref'
-        AND id_feeder = '$id_feeder'
-        LIMIT 1
-    ");
-
-    if ($q && mysqli_num_rows($q) > 0) {
-        $d = mysqli_fetch_assoc($q);
-        return $d['nama_ref'];
-    }
-
-    return '';
+    return mahasiswa_ref_name($conn, $jenis_ref, $id_feeder);
 }
 
 function get_table_columns($conn, $table)
 {
-    $columns = [];
-    $q = mysqli_query($conn, "SHOW COLUMNS FROM $table");
-
-    if ($q) {
-        while ($row = mysqli_fetch_assoc($q)) {
-            $columns[] = $row['Field'];
-        }
-    }
-
-    return $columns;
+    return mahasiswa_table_columns($conn, $table);
 }
 
 function insert_assoc($conn, $table, $data)
@@ -92,17 +59,17 @@ function insert_assoc($conn, $table, $data)
         VALUES (" . implode(", ", $values) . ")
     ";
 
-    return mysqli_query($conn, $sql);
+    return mahasiswa_execute($conn, $sql);
 }
 
-$data_prodi = mysqli_query($conn, "
+$data_prodi = mahasiswa_fetch_all($conn, "
     SELECT *
     FROM prodi
     WHERE status = 'aktif'
     ORDER BY nama_prodi ASC
 ");
 
-$data_kelas = mysqli_query($conn, "
+$data_kelas = mahasiswa_fetch_all($conn, "
     SELECT 
         kelas.*,
         prodi.nama_prodi,
@@ -125,12 +92,12 @@ $q_penghasilan_ayah = get_ref_options($conn, 'penghasilan');
 $q_penghasilan_ibu = get_ref_options($conn, 'penghasilan');
 $q_transportasi = get_ref_options($conn, 'alat_transportasi');
 
-$role_mahasiswa = mysqli_fetch_assoc(mysqli_query($conn, "
+$role_mahasiswa = mahasiswa_query_one($conn, "
     SELECT id_role
     FROM roles
     WHERE nama_role = 'mahasiswa'
     LIMIT 1
-"));
+");
 
 $id_role_mahasiswa = $role_mahasiswa['id_role'] ?? 0;
 $link_login = "http://localhost/siakad-atitb/auth/login.php";
@@ -213,16 +180,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email_db = mysqli_real_escape_string($conn, $email);
         $nik_db = mysqli_real_escape_string($conn, $nik);
 
-        $cek_user = mysqli_query($conn, "
+        $cek_user = mahasiswa_query_exists($conn, "
             SELECT id_user
             FROM users
             WHERE username = '$username_db'
             LIMIT 1
         ");
 
-        $cek_email_user = false;
+        $email_terpakai = null;
         if (!empty($email)) {
-            $cek_email_user = mysqli_query($conn, "
+            $email_terpakai = mahasiswa_query_one($conn, "
                 SELECT id_user, username
                 FROM users
                 WHERE email = '$email_db'
@@ -230,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
         }
 
-        $cek_nim = mysqli_query($conn, "
+        $cek_nim = mahasiswa_query_exists($conn, "
             SELECT id_mahasiswa
             FROM mahasiswa
             WHERE nim = '$nim_db'
@@ -239,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $cek_nik = false;
         if (!empty($nik)) {
-            $cek_nik = mysqli_query($conn, "
+            $cek_nik = mahasiswa_query_exists($conn, "
                 SELECT id_mahasiswa
                 FROM mahasiswa
                 WHERE nik = '$nik_db'
@@ -247,14 +214,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
         }
 
-        if ($cek_user && mysqli_num_rows($cek_user) > 0) {
+        if ($cek_user) {
             set_alert("error", "Username sudah digunakan.");
-        } elseif ($cek_email_user && mysqli_num_rows($cek_email_user) > 0) {
-            $email_terpakai = mysqli_fetch_assoc($cek_email_user);
+        } elseif ($email_terpakai) {
             set_alert("error", "Email sudah digunakan oleh akun username " . ($email_terpakai['username'] ?? '-') . ". Gunakan email lain atau kosongkan email akun terlebih dahulu.");
-        } elseif ($cek_nim && mysqli_num_rows($cek_nim) > 0) {
+        } elseif ($cek_nim) {
             set_alert("error", "NIM sudah digunakan.");
-        } elseif ($cek_nik && mysqli_num_rows($cek_nik) > 0) {
+        } elseif ($cek_nik) {
             set_alert("error", "NIK sudah digunakan.");
         } else {
 
@@ -289,7 +255,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $no_hp_sql = !empty($no_hp) ? "'$no_hp_db'" : "NULL";
                     $foto_sql = !empty($foto_db) ? "'$foto_db'" : "NULL";
 
-                    $simpan_user = mysqli_query($conn, "
+                    $simpan_user = mahasiswa_execute($conn, "
                         INSERT INTO users
                         (id_role, username, password, nama_lengkap, email, no_hp, foto, status)
                         VALUES
@@ -451,9 +417,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -486,11 +452,11 @@ require_once "../../includes/navbar.php";
                         class="text-red-600">*</span></label>
                 <select name="id_prodi" required class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">-- Pilih Prodi --</option>
-                    <?php while ($prodi = mysqli_fetch_assoc($data_prodi)): ?>
+                    <?php foreach ($data_prodi as $prodi): ?>
                         <option value="<?= $prodi['id_prodi']; ?>">
                             <?= htmlspecialchars($prodi['nama_prodi']); ?> - <?= htmlspecialchars($prodi['jenjang']); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -498,11 +464,11 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Kelas</label>
                 <select name="id_kelas" class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">-- Belum Masuk Kelas --</option>
-                    <?php while ($kelas = mysqli_fetch_assoc($data_kelas)): ?>
+                    <?php foreach ($data_kelas as $kelas): ?>
                         <option value="<?= $kelas['id_kelas']; ?>">
                             <?= htmlspecialchars($kelas['nama_kelas']); ?> - <?= htmlspecialchars($kelas['nama_prodi']); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -533,11 +499,11 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Jalur Masuk PDDikti</label>
                 <select name="id_jalur_masuk_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">-- Pilih Jalur Masuk --</option>
-                    <?php while ($row = mysqli_fetch_assoc($q_jalur_masuk)): ?>
+                    <?php foreach ($q_jalur_masuk as $row): ?>
                         <option value="<?= htmlspecialchars($row['id_feeder']); ?>">
                             <?= htmlspecialchars($row['nama_ref']); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -545,11 +511,11 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Jenis Pendaftaran PDDikti</label>
                 <select name="id_jenis_pendaftaran_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">-- Pilih Jenis Pendaftaran --</option>
-                    <?php while ($row = mysqli_fetch_assoc($q_jenis_pendaftaran)): ?>
+                    <?php foreach ($q_jenis_pendaftaran as $row): ?>
                         <option value="<?= htmlspecialchars($row['id_feeder']); ?>">
                             <?= htmlspecialchars($row['nama_ref']); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -557,11 +523,11 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Status Mahasiswa PDDikti</label>
                 <select name="id_status_mahasiswa_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">-- Pilih Status Mahasiswa --</option>
-                    <?php while ($row = mysqli_fetch_assoc($q_status_mahasiswa)): ?>
+                    <?php foreach ($q_status_mahasiswa as $row): ?>
                         <option value="<?= htmlspecialchars($row['id_feeder']); ?>">
                             <?= htmlspecialchars($row['nama_ref']); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -589,11 +555,11 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Agama PDDikti</label>
                 <select name="id_agama_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">-- Pilih Agama --</option>
-                    <?php while ($row = mysqli_fetch_assoc($q_agama)): ?>
+                    <?php foreach ($q_agama as $row): ?>
                         <option value="<?= htmlspecialchars($row['id_feeder']); ?>">
                             <?= htmlspecialchars($row['nama_ref']); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -627,11 +593,11 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Negara / Kewarganegaraan</label>
                 <select name="id_negara_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">-- Pilih Negara --</option>
-                    <?php while ($row = mysqli_fetch_assoc($q_negara)): ?>
+                    <?php foreach ($q_negara as $row): ?>
                         <option value="<?= htmlspecialchars($row['id_feeder']); ?>" <?= $row['id_feeder'] == 'ID' ? 'selected' : ''; ?>>
                             <?= htmlspecialchars($row['nama_ref']); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -679,11 +645,11 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Alat Transportasi</label>
                 <select name="id_alat_transportasi_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">-- Pilih Transportasi --</option>
-                    <?php while ($row = mysqli_fetch_assoc($q_transportasi)): ?>
+                    <?php foreach ($q_transportasi as $row): ?>
                         <option value="<?= htmlspecialchars($row['id_feeder']); ?>">
                             <?= htmlspecialchars($row['nama_ref']); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -722,11 +688,11 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Pekerjaan Ayah</label>
                 <select name="id_pekerjaan_ayah_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">-- Pilih Pekerjaan Ayah --</option>
-                    <?php while ($row = mysqli_fetch_assoc($q_pekerjaan_ayah)): ?>
+                    <?php foreach ($q_pekerjaan_ayah as $row): ?>
                         <option value="<?= htmlspecialchars($row['id_feeder']); ?>">
                             <?= htmlspecialchars($row['nama_ref']); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -734,11 +700,11 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Pekerjaan Ibu</label>
                 <select name="id_pekerjaan_ibu_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">-- Pilih Pekerjaan Ibu --</option>
-                    <?php while ($row = mysqli_fetch_assoc($q_pekerjaan_ibu)): ?>
+                    <?php foreach ($q_pekerjaan_ibu as $row): ?>
                         <option value="<?= htmlspecialchars($row['id_feeder']); ?>">
                             <?= htmlspecialchars($row['nama_ref']); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -746,11 +712,11 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Penghasilan Ayah</label>
                 <select name="id_penghasilan_ayah_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">-- Pilih Penghasilan Ayah --</option>
-                    <?php while ($row = mysqli_fetch_assoc($q_penghasilan_ayah)): ?>
+                    <?php foreach ($q_penghasilan_ayah as $row): ?>
                         <option value="<?= htmlspecialchars($row['id_feeder']); ?>">
                             <?= htmlspecialchars($row['nama_ref']); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -758,11 +724,11 @@ require_once "../../includes/navbar.php";
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Penghasilan Ibu</label>
                 <select name="id_penghasilan_ibu_feeder" class="w-full rounded-xl border border-slate-300 px-4 py-3">
                     <option value="">-- Pilih Penghasilan Ibu --</option>
-                    <?php while ($row = mysqli_fetch_assoc($q_penghasilan_ibu)): ?>
+                    <?php foreach ($q_penghasilan_ibu as $row): ?>
                         <option value="<?= htmlspecialchars($row['id_feeder']); ?>">
                             <?= htmlspecialchars($row['nama_ref']); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -875,4 +841,4 @@ require_once "../../includes/navbar.php";
     });
 </script>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

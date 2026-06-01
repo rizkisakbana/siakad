@@ -1,8 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/kelas_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -15,7 +18,7 @@ if ($id_kelas <= 0) {
     exit;
 }
 
-$cek = mysqli_query($conn, "
+$data = kelas_query_one($conn, "
     SELECT 
         kelas.*,
         prodi.nama_prodi,
@@ -29,35 +32,23 @@ $cek = mysqli_query($conn, "
     LIMIT 1
 ");
 
-if (!$cek || mysqli_num_rows($cek) < 1) {
+if (!$data) {
     set_alert("error", "Data kelas tidak ditemukan.");
     header("Location: data_kelas.php");
     exit;
 }
 
-$data = mysqli_fetch_assoc($cek);
-
-$total_mahasiswa = 0;
-$query_mahasiswa = mysqli_query($conn, "
+$total_mahasiswa = kelas_count($conn, "
     SELECT COUNT(*) AS total 
     FROM mahasiswa 
     WHERE id_kelas = '$id_kelas'
 ");
 
-if ($query_mahasiswa) {
-    $total_mahasiswa = mysqli_fetch_assoc($query_mahasiswa)['total'] ?? 0;
-}
-
-$total_jadwal = 0;
-$query_jadwal = mysqli_query($conn, "
+$total_jadwal = kelas_count($conn, "
     SELECT COUNT(*) AS total 
     FROM jadwal_kuliah 
     WHERE id_kelas = '$id_kelas'
 ");
-
-if ($query_jadwal) {
-    $total_jadwal = mysqli_fetch_assoc($query_jadwal)['total'] ?? 0;
-}
 
 if ($total_mahasiswa > 0 || $total_jadwal > 0) {
     set_alert(

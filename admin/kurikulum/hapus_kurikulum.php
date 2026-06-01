@@ -1,8 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/kurikulum_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -15,7 +18,7 @@ if ($id_kurikulum <= 0) {
     exit;
 }
 
-$cek = mysqli_query($conn, "
+$data = kurikulum_query_one($conn, "
     SELECT 
         kurikulum.*,
         prodi.nama_prodi
@@ -25,19 +28,17 @@ $cek = mysqli_query($conn, "
     LIMIT 1
 ");
 
-if (mysqli_num_rows($cek) < 1) {
+if (!$data) {
     set_alert("error", "Data kurikulum tidak ditemukan.");
     header("Location: data_kurikulum.php");
     exit;
 }
 
-$data = mysqli_fetch_assoc($cek);
-
-$cek_mk = mysqli_fetch_assoc(mysqli_query($conn, "
+$cek_mk = kurikulum_count($conn, "
     SELECT COUNT(*) AS total
     FROM mata_kuliah
     WHERE id_kurikulum = '$id_kurikulum'
-"))['total'] ?? 0;
+");
 
 if ($cek_mk > 0) {
     set_alert("warning", "Kurikulum tidak dapat dihapus karena sudah digunakan pada data mata kuliah.");

@@ -1,10 +1,13 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../vendor/autoload.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../vendor/autoload.php";
+require_once __DIR__ . "/dosen_helper.php";
+
+/** @var mysqli $conn */
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -14,11 +17,11 @@ cek_role(['super_admin', 'admin_akademik']);
 $page_title = "Import Data Dosen";
 $page_subtitle = "Import data dosen melalui file Excel";
 
-$role_dosen = mysqli_fetch_assoc(mysqli_query($conn, "
+$role_dosen = dosen_query_one($conn, "
     SELECT id_role FROM roles 
     WHERE nama_role = 'dosen'
     LIMIT 1
-"));
+");
 
 $id_role_dosen = $role_dosen['id_role'] ?? 0;
 
@@ -80,45 +83,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             continue;
                         }
 
-                        $q_prodi = mysqli_query($conn, "
+                        $prodi = dosen_query_one($conn, "
                             SELECT id_prodi 
                             FROM prodi 
                             WHERE id_prodi = '$id_prodi_excel'
                             LIMIT 1
                         ");
 
-                        if (mysqli_num_rows($q_prodi) < 1) {
+                        if (!$prodi) {
                             $gagal++;
                             $pesan_gagal[] = "Baris $baris: id_prodi $id_prodi_excel tidak ditemukan pada tabel prodi.";
                             continue;
                         }
 
-                        $prodi = mysqli_fetch_assoc($q_prodi);
                         $id_prodi = intval($prodi['id_prodi']);
 
                         $username_db = mysqli_real_escape_string($conn, $username);
 
-                        $cek_user = mysqli_query($conn, "
+                        $cek_user_exists = dosen_query_exists($conn, "
                             SELECT id_user FROM users 
                             WHERE username = '$username_db'
                             LIMIT 1
                         ");
 
-                        if (mysqli_num_rows($cek_user) > 0) {
+                        if ($cek_user_exists === null) {
                             $gagal++;
-                            $pesan_gagal[] = "Baris $baris: id_prodi $id_prodi_excel tidak ditemukan pada tabel prodi.";
+                            $pesan_gagal[] = "Baris $baris: validasi username gagal diproses.";
+                            continue;
+                        }
+
+                        if ($cek_user_exists) {
+                            $gagal++;
+                            $pesan_gagal[] = "Baris $baris: username $username sudah digunakan.";
                             continue;
                         }
 
                         if (!empty($nidn)) {
                             $nidn_db = mysqli_real_escape_string($conn, $nidn);
-                            $cek_nidn = mysqli_query($conn, "
+                            $cek_nidn_exists = dosen_query_exists($conn, "
                                 SELECT id_dosen FROM dosen 
                                 WHERE nidn = '$nidn_db'
                                 LIMIT 1
                             ");
 
-                            if (mysqli_num_rows($cek_nidn) > 0) {
+                            if ($cek_nidn_exists === null) {
+                                $gagal++;
+                                $pesan_gagal[] = "Baris $baris: validasi NIDN gagal diproses.";
+                                continue;
+                            }
+
+                            if ($cek_nidn_exists) {
                                 $gagal++;
                                 $pesan_gagal[] = "Baris $baris: NIDN $nidn sudah digunakan.";
                                 continue;
@@ -232,9 +246,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -431,4 +445,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

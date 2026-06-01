@@ -1,14 +1,17 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/notification.php";
-require_once "../../includes/email_gateway.php";
-require_once "../../includes/whatsapp_gateway.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/notification.php";
+require_once __DIR__ . "/../../includes/email_gateway.php";
+require_once __DIR__ . "/../../includes/whatsapp_gateway.php";
+require_once __DIR__ . "/mahasiswa_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
+
+/** @var mysqli $conn */
 
 $id_mahasiswa = intval($_GET['id'] ?? 0);
 
@@ -18,7 +21,7 @@ if ($id_mahasiswa <= 0) {
     exit;
 }
 
-$query = mysqli_query($conn, "
+$data = mahasiswa_query_one($conn, "
     SELECT 
         mahasiswa.*,
         users.username,
@@ -33,13 +36,11 @@ $query = mysqli_query($conn, "
     LIMIT 1
 ");
 
-if (!$query || mysqli_num_rows($query) < 1) {
+if (!$data) {
     set_alert("error", "Data mahasiswa tidak ditemukan.");
     header("Location: data_mahasiswa.php");
     exit;
 }
-
-$data = mysqli_fetch_assoc($query);
 
 $id_user = intval($data['id_user']);
 $nim = $data['nim'];
@@ -48,28 +49,20 @@ $email = $data['email'];
 $no_hp = $data['no_hp'];
 $username = $data['username'];
 
-$total_krs = 0;
-$q_krs = mysqli_query($conn, "SELECT COUNT(*) AS total FROM krs WHERE id_mahasiswa = '$id_mahasiswa'");
-if ($q_krs) {
-    $total_krs = mysqli_fetch_assoc($q_krs)['total'] ?? 0;
-}
+$total_krs = mahasiswa_count($conn, "SELECT COUNT(*) AS total FROM krs WHERE id_mahasiswa = '$id_mahasiswa'");
 
-$total_nilai = 0;
-$q_nilai = mysqli_query($conn, "
+$total_nilai = mahasiswa_count($conn, "
     SELECT COUNT(*) AS total
     FROM nilai
     LEFT JOIN krs_detail ON nilai.id_krs_detail = krs_detail.id_krs_detail
     LEFT JOIN krs ON krs_detail.id_krs = krs.id_krs
     WHERE krs.id_mahasiswa = '$id_mahasiswa'
 ");
-if ($q_nilai) {
-    $total_nilai = mysqli_fetch_assoc($q_nilai)['total'] ?? 0;
-}
 
 mysqli_begin_transaction($conn);
 
 try {
-    $update_mahasiswa = mysqli_query($conn, "
+    $update_mahasiswa = mahasiswa_execute($conn, "
         UPDATE mahasiswa SET
             status_mahasiswa = 'nonaktif',
             status = 'nonaktif',
@@ -84,7 +77,7 @@ try {
     }
 
     if ($id_user > 0) {
-        $update_user = mysqli_query($conn, "
+        $update_user = mahasiswa_execute($conn, "
             UPDATE users SET
                 status = 'nonaktif',
                 updated_at = NOW()

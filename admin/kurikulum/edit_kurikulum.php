@@ -1,9 +1,12 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/kurikulum_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -19,22 +22,20 @@ if ($id_kurikulum <= 0) {
     exit;
 }
 
-$query = mysqli_query($conn, "
+$data = kurikulum_query_one($conn, "
     SELECT * 
     FROM kurikulum 
     WHERE id_kurikulum = '$id_kurikulum'
     LIMIT 1
 ");
 
-if (mysqli_num_rows($query) < 1) {
+if (!$data) {
     set_alert("error", "Data kurikulum tidak ditemukan.");
     header("Location: data_kurikulum.php");
     exit;
 }
 
-$data = mysqli_fetch_assoc($query);
-
-$data_prodi = mysqli_query($conn, "
+$data_prodi = kurikulum_fetch_all($conn, "
     SELECT * 
     FROM prodi 
     WHERE status = 'aktif'
@@ -53,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($total_sks < 0) {
         set_alert("error", "Total SKS tidak boleh bernilai negatif.");
     } else {
-        $cek_duplikat = mysqli_query($conn, "
+        $duplikat = kurikulum_query_exists($conn, "
             SELECT id_kurikulum 
             FROM kurikulum 
             WHERE id_prodi = '$id_prodi'
@@ -63,7 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             LIMIT 1
         ");
 
-        if (mysqli_num_rows($cek_duplikat) > 0) {
+        if ($duplikat === null) {
+            set_alert("error", "Validasi kurikulum gagal diproses.");
+        } elseif ($duplikat) {
             set_alert("error", "Kurikulum dengan prodi, nama, dan tahun tersebut sudah tersedia.");
         } else {
             $update = mysqli_query($conn, "
@@ -94,9 +97,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -131,12 +134,12 @@ require_once "../../includes/navbar.php";
                             class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-2 focus:ring-blue-600 outline-none">
                         <option value="">-- Pilih Program Studi --</option>
 
-                        <?php while ($prodi = mysqli_fetch_assoc($data_prodi)): ?>
+                        <?php foreach ($data_prodi as $prodi): ?>
                             <option value="<?= $prodi['id_prodi']; ?>"
                                 <?= $data['id_prodi'] == $prodi['id_prodi'] ? 'selected' : ''; ?>>
                                 <?= htmlspecialchars($prodi['nama_prodi']); ?> - <?= htmlspecialchars($prodi['jenjang']); ?>
                             </option>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     </select>
                 </div>
 
@@ -243,4 +246,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

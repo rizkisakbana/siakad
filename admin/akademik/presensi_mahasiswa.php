@@ -1,8 +1,10 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/internal_module_helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/internal_module_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -18,7 +20,7 @@ $cards = [
 ];
 
 $rows = [];
-$q = mysqli_query($conn, "
+$data_presensi = internal_fetch_all($conn, "
     SELECT pk.*, mk.nama_mk, k.nama_kelas, d.nama_dosen
     FROM presensi_kuliah pk
     LEFT JOIN jadwal_kuliah j ON j.id_jadwal = pk.id_jadwal
@@ -29,22 +31,20 @@ $q = mysqli_query($conn, "
     LIMIT 25
 ");
 
-if ($q) {
-    while ($r = mysqli_fetch_assoc($q)) {
-        $rows[] = [
-            htmlspecialchars($r['tanggal_presensi'] ?? '-'),
-            htmlspecialchars('Pertemuan ' . ($r['pertemuan_ke'] ?? '-')),
-            htmlspecialchars($r['nama_mk'] ?? '-'),
-            htmlspecialchars($r['nama_kelas'] ?? '-'),
-            htmlspecialchars($r['nama_dosen'] ?? '-'),
-            internal_badge($r['status_pertemuan'] ?? '-'),
-        ];
-    }
+foreach ($data_presensi as $r) {
+    $rows[] = [
+        htmlspecialchars($r['tanggal_presensi'] ?? '-'),
+        htmlspecialchars('Pertemuan ' . ($r['pertemuan_ke'] ?? '-')),
+        htmlspecialchars($r['nama_mk'] ?? '-'),
+        htmlspecialchars($r['nama_kelas'] ?? '-'),
+        htmlspecialchars($r['nama_dosen'] ?? '-'),
+        internal_badge($r['status_pertemuan'] ?? '-'),
+    ];
 }
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 show_alert();
 render_internal_page('Presensi Mahasiswa', 'Monitoring sesi perkuliahan dan kehadiran mahasiswa.', $cards, ['Tanggal', 'Pertemuan', 'Mata Kuliah', 'Kelas', 'Dosen', 'Status'], $rows, 'Belum ada sesi presensi.');
-require_once "../../includes/footer.php";
+require_once __DIR__ . "/../../includes/footer.php";

@@ -1,8 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/mahasiswa_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -15,7 +18,7 @@ if ($id_mahasiswa <= 0) {
     exit;
 }
 
-$query = mysqli_query($conn, "
+$data = mahasiswa_query_one($conn, "
     SELECT 
         mahasiswa.*,
         users.username,
@@ -34,13 +37,11 @@ $query = mysqli_query($conn, "
     LIMIT 1
 ");
 
-if (!$query || mysqli_num_rows($query) < 1) {
+if (!$data) {
     set_alert("error", "Data mahasiswa tidak ditemukan.");
     header("Location: data_mahasiswa.php");
     exit;
 }
-
-$data = mysqli_fetch_assoc($query);
 
 $page_title = "Detail Mahasiswa";
 $page_subtitle = $data['nama_mahasiswa'] ?? "Detail data mahasiswa";
@@ -52,27 +53,7 @@ function tampil($value)
 
 function ref_nama($conn, $jenis_ref, $id_feeder)
 {
-    $jenis_ref = mysqli_real_escape_string($conn, trim((string) $jenis_ref));
-    $id_feeder = mysqli_real_escape_string($conn, trim((string) $id_feeder));
-
-    if ($jenis_ref === '' || $id_feeder === '') {
-        return '';
-    }
-
-    $q = mysqli_query($conn, "
-        SELECT nama_ref
-        FROM ref_pddikti
-        WHERE jenis_ref = '$jenis_ref'
-        AND TRIM(id_feeder) = '$id_feeder'
-        LIMIT 1
-    ");
-
-    if ($q && mysqli_num_rows($q) > 0) {
-        $row = mysqli_fetch_assoc($q);
-        return $row['nama_ref'] ?? '';
-    }
-
-    return '';
+    return mahasiswa_ref_name($conn, trim((string) $jenis_ref), trim((string) $id_feeder));
 }
 
 function nama_wilayah_berantai($conn, $id_wilayah)
@@ -89,7 +70,7 @@ function nama_wilayah_berantai($conn, $id_wilayah)
 
     while ($current !== '' && $guard < 5) {
         $safe_id = mysqli_real_escape_string($conn, trim($current));
-        $q = mysqli_query($conn, "
+        $row = mahasiswa_query_one($conn, "
             SELECT id_induk_feeder, nama_ref
             FROM ref_pddikti
             WHERE jenis_ref = 'wilayah'
@@ -97,11 +78,10 @@ function nama_wilayah_berantai($conn, $id_wilayah)
             LIMIT 1
         ");
 
-        if (!$q || mysqli_num_rows($q) < 1) {
+        if (!$row) {
             break;
         }
 
-        $row = mysqli_fetch_assoc($q);
         $nama = trim((string) ($row['nama_ref'] ?? ''));
 
         if ($nama !== '' && strtolower($nama) !== 'indonesia') {
@@ -140,9 +120,9 @@ if ($nama_jalur_masuk === '') {
 
 $nama_wilayah = nama_wilayah_berantai($conn, $data['id_wilayah_feeder'] ?? '');
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -426,4 +406,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

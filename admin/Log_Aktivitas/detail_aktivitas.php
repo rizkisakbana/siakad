@@ -1,6 +1,10 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/log_aktivitas_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik', 'admin_keuangan']);
@@ -11,14 +15,12 @@ $page_subtitle = "Informasi detail aktivitas pengguna sistem";
 $id_log = intval($_GET['id'] ?? 0);
 
 if ($id_log <= 0) {
-    echo "<script>
-        alert('ID aktivitas tidak valid.');
-        window.location='data_aktivitas.php';
-    </script>";
+    set_alert("error", "ID aktivitas tidak valid.");
+    header("Location: data_aktivitas.php");
     exit;
 }
 
-$query = mysqli_query($conn, "
+$data = aktivitas_query_one($conn, "
     SELECT 
         log_aktivitas.*,
         users.nama_lengkap,
@@ -33,19 +35,15 @@ $query = mysqli_query($conn, "
     LIMIT 1
 ");
 
-if (mysqli_num_rows($query) < 1) {
-    echo "<script>
-        alert('Data aktivitas tidak ditemukan.');
-        window.location='data_aktivitas.php';
-    </script>";
+if (!$data) {
+    set_alert("error", "Data aktivitas tidak ditemukan.");
+    header("Location: data_aktivitas.php");
     exit;
 }
 
-$data = mysqli_fetch_assoc($query);
-
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -195,4 +193,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>
