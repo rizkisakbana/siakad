@@ -1,10 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/neofeeder_helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/neofeeder_helper.php";
+require_once __DIR__ . "/neofeeder_admin_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -92,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sync_profil_pt'])) {
                 set_alert("error", "Data Profil PT tidak lengkap. ID Feeder, Kode PT, dan Nama PT wajib tersedia.");
             } else {
 
-                $cek = mysqli_query($conn, "
+                $profil = nf_query_one($conn, "
                     SELECT id_pt 
                     FROM profil_pt
                     WHERE id_feeder = '$id_feeder'
@@ -100,8 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sync_profil_pt'])) {
                     LIMIT 1
                 ");
 
-                if ($cek && mysqli_num_rows($cek) > 0) {
-                    $profil = mysqli_fetch_assoc($cek);
+                if ($profil) {
                     $id_pt = intval($profil['id_pt']);
 
                     $simpan = mysqli_query($conn, "
@@ -261,17 +261,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sync_profil_pt'])) {
     }
 }
 
-$profil_pt = null;
-$q_profil = mysqli_query($conn, "
+$profil_pt = nf_query_one($conn, "
     SELECT *
     FROM profil_pt
     ORDER BY id_pt DESC
     LIMIT 1
 ");
-
-if ($q_profil && mysqli_num_rows($q_profil) > 0) {
-    $profil_pt = mysqli_fetch_assoc($q_profil);
-}
 
 $summary = $_SESSION['sync_profil_pt_summary'] ?? null;
 unset($_SESSION['sync_profil_pt_summary']);
@@ -284,9 +279,9 @@ if ($config && ($config['status'] ?? '') == 'connected') {
     $status_label = "Connected";
 }
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -529,4 +524,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

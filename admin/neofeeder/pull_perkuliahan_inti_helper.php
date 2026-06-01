@@ -65,9 +65,8 @@ function pi_add_error(&$result, $label, $message)
 
 function pi_first_id($conn, $sql, $field)
 {
-    $q = mysqli_query($conn, $sql);
-    if ($q && mysqli_num_rows($q) > 0) {
-        $row = mysqli_fetch_assoc($q);
+    $row = nf_query_one($conn, $sql);
+    if ($row) {
         return (int) $row[$field];
     }
 
@@ -1312,7 +1311,7 @@ function pull_transkrip_pelaporan($conn, $limit, $offset)
     $limit = max(1, (int)$limit);
     $offset = max(0, (int)$offset);
 
-    $q = mysqli_query($conn, "
+    $data_mahasiswa = nf_fetch_all($conn, "
         SELECT m.id_mahasiswa, m.nim, m.nama_mahasiswa, m.id_registrasi_feeder, m.id_prodi, m.id_prodi_feeder
         FROM mahasiswa m
         WHERE m.id_registrasi_feeder IS NOT NULL
@@ -1321,12 +1320,7 @@ function pull_transkrip_pelaporan($conn, $limit, $offset)
         LIMIT $limit OFFSET $offset
     ");
 
-    if (!$q) {
-        pi_add_error($result, 'Query mahasiswa', mysqli_error($conn));
-        return $result;
-    }
-
-    while ($mahasiswa = mysqli_fetch_assoc($q)) {
+    foreach ($data_mahasiswa as $mahasiswa) {
         $result['total']++;
         $id_reg = trim((string)($mahasiswa['id_registrasi_feeder'] ?? ''));
         $safe_reg = mysqli_real_escape_string($conn, $id_reg);

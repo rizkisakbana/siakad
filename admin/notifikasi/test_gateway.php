@@ -1,7 +1,8 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/notifikasi_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik', 'admin_keuangan']);
@@ -9,37 +10,37 @@ cek_role(['super_admin', 'admin_akademik', 'admin_keuangan']);
 $page_title = "Test Gateway";
 $page_subtitle = "Pusat pengujian email gateway dan WhatsApp gateway";
 
-$total_email = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_email = notifikasi_count($conn, "
     SELECT COUNT(*) AS total FROM email_log
-"))['total'] ?? 0;
+");
 
-$total_email_gagal = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_email_gagal = notifikasi_count($conn, "
     SELECT COUNT(*) AS total FROM email_log WHERE status = 'gagal'
-"))['total'] ?? 0;
+");
 
-$total_whatsapp = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_whatsapp = notifikasi_count($conn, "
     SELECT COUNT(*) AS total FROM whatsapp_log
-"))['total'] ?? 0;
+");
 
-$total_whatsapp_gagal = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_whatsapp_gagal = notifikasi_count($conn, "
     SELECT COUNT(*) AS total FROM whatsapp_log WHERE status = 'gagal'
-"))['total'] ?? 0;
+");
 
-$email_terakhir = mysqli_query($conn, "
+$email_terakhir = notifikasi_all($conn, "
     SELECT * FROM email_log
     ORDER BY id_email_log DESC
     LIMIT 5
 ");
 
-$wa_terakhir = mysqli_query($conn, "
+$wa_terakhir = notifikasi_all($conn, "
     SELECT * FROM whatsapp_log
     ORDER BY id_whatsapp_log DESC
     LIMIT 5
 ");
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -138,8 +139,8 @@ require_once "../../includes/navbar.php";
             <h2 class="text-lg font-bold text-slate-800 mb-4">Email Terakhir</h2>
 
             <div class="space-y-3">
-                <?php if (mysqli_num_rows($email_terakhir) > 0): ?>
-                    <?php while ($row = mysqli_fetch_assoc($email_terakhir)): ?>
+                <?php if (!empty($email_terakhir)): ?>
+                    <?php foreach ($email_terakhir as $row): ?>
                         <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
                             <div class="font-semibold text-slate-800 break-all">
                                 <?= htmlspecialchars($row['tujuan_email']); ?>
@@ -148,7 +149,7 @@ require_once "../../includes/navbar.php";
                                 <?= htmlspecialchars($row['status']); ?> • <?= tanggal_jam_indonesia($row['created_at']); ?>
                             </div>
                         </div>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 <?php else: ?>
                     <p class="text-sm text-slate-500">Belum ada data email.</p>
                 <?php endif; ?>
@@ -159,8 +160,8 @@ require_once "../../includes/navbar.php";
             <h2 class="text-lg font-bold text-slate-800 mb-4">WhatsApp Terakhir</h2>
 
             <div class="space-y-3">
-                <?php if (mysqli_num_rows($wa_terakhir) > 0): ?>
-                    <?php while ($row = mysqli_fetch_assoc($wa_terakhir)): ?>
+                <?php if (!empty($wa_terakhir)): ?>
+                    <?php foreach ($wa_terakhir as $row): ?>
                         <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
                             <div class="font-semibold text-slate-800 break-all">
                                 <?= htmlspecialchars($row['tujuan_nomor']); ?>
@@ -169,7 +170,7 @@ require_once "../../includes/navbar.php";
                                 <?= htmlspecialchars($row['status']); ?> • <?= tanggal_jam_indonesia($row['created_at']); ?>
                             </div>
                         </div>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 <?php else: ?>
                     <p class="text-sm text-slate-500">Belum ada data WhatsApp.</p>
                 <?php endif; ?>
@@ -180,4 +181,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

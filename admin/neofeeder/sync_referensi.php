@@ -1,10 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/neofeeder_helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/neofeeder_helper.php";
+require_once __DIR__ . "/neofeeder_admin_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -244,7 +245,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sync_referensi'])) {
                     ? mysqli_real_escape_string($conn, $id_induk_feeder_raw)
                     : null;
 
-                $cek = mysqli_query($conn, "
+                $lokal = nf_query_one($conn, "
                     SELECT id_ref
                     FROM ref_pddikti
                     WHERE jenis_ref = '$jenis_db'
@@ -252,8 +253,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sync_referensi'])) {
                     LIMIT 1
                 ");
 
-                if ($cek && mysqli_num_rows($cek) > 0) {
-                    $lokal = mysqli_fetch_assoc($cek);
+                if ($lokal) {
                     $id_ref = intval($lokal['id_ref']);
 
                     $update = mysqli_query($conn, "
@@ -341,15 +341,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sync_referensi'])) {
     }
 }
 
-$total_ref = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_ref = nf_count($conn, "
     SELECT COUNT(*) AS total FROM ref_pddikti
-"))['total'] ?? 0;
+");
 
-$total_jenis = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_jenis = nf_count($conn, "
     SELECT COUNT(DISTINCT jenis_ref) AS total FROM ref_pddikti
-"))['total'] ?? 0;
+");
 
-$data_ringkasan = mysqli_query($conn, "
+$data_ringkasan = nf_fetch_all($conn, "
     SELECT jenis_ref, COUNT(*) AS total
     FROM ref_pddikti
     GROUP BY jenis_ref
@@ -367,9 +367,9 @@ if ($config && ($config['status'] ?? '') == 'connected') {
     $status_label = "Connected";
 }
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -504,13 +504,13 @@ require_once "../../includes/navbar.php";
             <h3 class="text-lg font-bold text-slate-800 mb-4">Ringkasan Referensi Lokal</h3>
 
             <div class="space-y-3 text-sm">
-                <?php if ($data_ringkasan && mysqli_num_rows($data_ringkasan) > 0): ?>
-                    <?php while ($row = mysqli_fetch_assoc($data_ringkasan)): ?>
+                <?php if (!empty($data_ringkasan)): ?>
+                    <?php foreach ($data_ringkasan as $row): ?>
                         <div class="flex justify-between gap-4 border-b pb-3">
                             <span class="text-slate-500"><?= htmlspecialchars($row['jenis_ref']); ?></span>
                             <span class="font-semibold text-slate-800"><?= number_format($row['total']); ?></span>
                         </div>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 <?php else: ?>
                     <p class="text-slate-500">Belum ada referensi yang disinkronkan.</p>
                 <?php endif; ?>
@@ -522,4 +522,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

@@ -1,9 +1,10 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/pengguna_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -11,7 +12,7 @@ cek_role(['super_admin', 'admin_akademik']);
 $page_title = "Role Akses";
 $page_subtitle = "Monitoring daftar role pengguna sistem";
 
-$data_role = mysqli_query($conn, "
+$data_role = pengguna_all($conn, "
     SELECT roles.*, COUNT(users.id_user) AS total_user
     FROM roles
     LEFT JOIN users ON roles.id_role = users.id_role
@@ -19,9 +20,9 @@ $data_role = mysqli_query($conn, "
     ORDER BY roles.id_role ASC
 ");
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -54,7 +55,7 @@ require_once "../../includes/navbar.php";
                 </thead>
 
                 <tbody class="divide-y divide-slate-100">
-                    <?php $no = 1; while ($row = mysqli_fetch_assoc($data_role)): ?>
+                    <?php $no = 1; foreach ($data_role as $row): ?>
                         <tr class="hover:bg-slate-50">
                             <td class="px-4 py-3"><?= $no++; ?></td>
 
@@ -81,7 +82,7 @@ require_once "../../includes/navbar.php";
                                 <?= tanggal_jam_indonesia($row['created_at']); ?>
                             </td>
                         </tr>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
@@ -90,4 +91,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

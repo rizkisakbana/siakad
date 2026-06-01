@@ -1,10 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/neofeeder_helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/neofeeder_helper.php";
+require_once __DIR__ . "/neofeeder_admin_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -55,7 +56,7 @@ if (isset($_POST['sync_wilayah'])) {
             $nama_ref = mysqli_real_escape_string($conn, $nama_ref_raw);
             $raw_data = mysqli_real_escape_string($conn, json_encode($item, JSON_UNESCAPED_UNICODE));
 
-            $cek = mysqli_query($conn, "
+            $lokal = nf_query_one($conn, "
                 SELECT id_ref
                 FROM ref_pddikti
                 WHERE jenis_ref = 'wilayah'
@@ -63,8 +64,7 @@ if (isset($_POST['sync_wilayah'])) {
                 LIMIT 1
             ");
 
-            if ($cek && mysqli_num_rows($cek) > 0) {
-                $lokal = mysqli_fetch_assoc($cek);
+            if ($lokal) {
                 $id_ref = intval($lokal['id_ref']);
 
                 $q = mysqli_query($conn, "
@@ -130,16 +130,16 @@ if (isset($_POST['sync_wilayah'])) {
     }
 }
 
-$total_wilayah = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_wilayah = nf_count($conn, "
     SELECT COUNT(*) AS total
     FROM ref_pddikti
     WHERE jenis_ref = 'wilayah'
-"))['total'] ?? 0;
+");
 
 $summary = $_SESSION['sync_wilayah_summary'] ?? null;
 unset($_SESSION['sync_wilayah_summary']);
 
-$data_wilayah = mysqli_query($conn, "
+$data_wilayah = nf_fetch_all($conn, "
     SELECT *
     FROM ref_pddikti
     WHERE jenis_ref = 'wilayah'
@@ -147,9 +147,9 @@ $data_wilayah = mysqli_query($conn, "
     LIMIT 20
 ");
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -262,14 +262,14 @@ require_once "../../includes/navbar.php";
                     </tr>
                 </thead>
                 <tbody class="divide-y">
-                    <?php if ($data_wilayah && mysqli_num_rows($data_wilayah) > 0): ?>
-                        <?php while ($row = mysqli_fetch_assoc($data_wilayah)): ?>
+                    <?php if (!empty($data_wilayah)): ?>
+                        <?php foreach ($data_wilayah as $row): ?>
                             <tr>
                                 <td class="px-4 py-3"><?= htmlspecialchars($row['id_feeder']); ?></td>
                                 <td class="px-4 py-3"><?= htmlspecialchars($row['id_induk_feeder'] ?? '-'); ?></td>
                                 <td class="px-4 py-3"><?= htmlspecialchars($row['nama_ref']); ?></td>
                             </tr>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
                             <td colspan="3" class="px-4 py-8 text-center text-slate-500">
@@ -285,4 +285,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

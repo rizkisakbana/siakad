@@ -1,11 +1,14 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/matakuliah_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
+
+/** @var mysqli $conn */
 
 $page_title = "Data Mata Kuliah";
 $page_subtitle = "Kelola master data mata kuliah berdasarkan kurikulum dan program studi";
@@ -39,29 +42,29 @@ if ($filter_semester > 0) {
     $where .= " AND mata_kuliah.semester = '$filter_semester'";
 }
 
-$total_mk = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_mk = matakuliah_count($conn, "
     SELECT COUNT(*) AS total FROM mata_kuliah
-"))['total'] ?? 0;
+");
 
-$total_aktif = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_aktif = matakuliah_count($conn, "
     SELECT COUNT(*) AS total FROM mata_kuliah WHERE status = 'aktif'
-"))['total'] ?? 0;
+");
 
-$total_nonaktif = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_nonaktif = matakuliah_count($conn, "
     SELECT COUNT(*) AS total FROM mata_kuliah WHERE status = 'nonaktif'
-"))['total'] ?? 0;
+");
 
-$total_sks = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_sks = matakuliah_sum($conn, "
     SELECT COALESCE(SUM(total_sks), 0) AS total FROM mata_kuliah
-"))['total'] ?? 0;
+");
 
-$data_prodi = mysqli_query($conn, "
+$data_prodi = matakuliah_fetch_all($conn, "
     SELECT * FROM prodi 
     WHERE status = 'aktif'
     ORDER BY nama_prodi ASC
 ");
 
-$data_kurikulum_filter = mysqli_query($conn, "
+$data_kurikulum_filter = matakuliah_fetch_all($conn, "
     SELECT 
         kurikulum.*,
         prodi.nama_prodi,
@@ -81,17 +84,17 @@ if ($page < 1) {
 
 $offset = ($page - 1) * $limit;
 
-$total_data_filter = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_data_filter = matakuliah_count($conn, "
     SELECT COUNT(*) AS total
     FROM mata_kuliah
     LEFT JOIN kurikulum ON mata_kuliah.id_kurikulum = kurikulum.id_kurikulum
     LEFT JOIN prodi ON kurikulum.id_prodi = prodi.id_prodi
     $where
-"))['total'] ?? 0;
+");
 
 $total_page = ceil($total_data_filter / $limit);
 
-$data_matakuliah = mysqli_query($conn, "
+$data_matakuliah = matakuliah_fetch_all($conn, "
     SELECT 
         mata_kuliah.*,
         kurikulum.nama_kurikulum,
@@ -114,9 +117,9 @@ $query_string = http_build_query([
     'semester' => $filter_semester
 ]);
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -228,21 +231,21 @@ require_once "../../includes/navbar.php";
             <select name="prodi"
                     class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-2 focus:ring-blue-600 outline-none">
                 <option value="0">Semua Prodi</option>
-                <?php while ($prodi = mysqli_fetch_assoc($data_prodi)): ?>
+                <?php foreach ($data_prodi as $prodi): ?>
                     <option value="<?= $prodi['id_prodi']; ?>" <?= $filter_prodi == $prodi['id_prodi'] ? 'selected' : ''; ?>>
                         <?= htmlspecialchars($prodi['nama_prodi']); ?>
                     </option>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </select>
 
             <select name="kurikulum"
                     class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-2 focus:ring-blue-600 outline-none">
                 <option value="0">Semua Kurikulum</option>
-                <?php while ($kurikulum = mysqli_fetch_assoc($data_kurikulum_filter)): ?>
+                <?php foreach ($data_kurikulum_filter as $kurikulum): ?>
                     <option value="<?= $kurikulum['id_kurikulum']; ?>" <?= $filter_kurikulum == $kurikulum['id_kurikulum'] ? 'selected' : ''; ?>>
                         <?= htmlspecialchars($kurikulum['nama_kurikulum']); ?> - <?= htmlspecialchars($kurikulum['nama_prodi']); ?>
                     </option>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </select>
 
             <select name="semester"
@@ -280,18 +283,18 @@ require_once "../../includes/navbar.php";
                 </thead>
 
                 <tbody class="divide-y divide-slate-100">
-                    <?php if (mysqli_num_rows($data_matakuliah) > 0): ?>
+                    <?php if (!empty($data_matakuliah)): ?>
                         <?php $no = $offset + 1; ?>
-                        <?php while ($row = mysqli_fetch_assoc($data_matakuliah)): ?>
+                        <?php foreach ($data_matakuliah as $row): ?>
 
                             <?php
                                 $id_mk = intval($row['id_mk']);
 
-                                $cek_jadwal = mysqli_fetch_assoc(mysqli_query($conn, "
+                                $cek_jadwal = matakuliah_count($conn, "
                                     SELECT COUNT(*) AS total 
                                     FROM jadwal_kuliah 
                                     WHERE id_mk = '$id_mk'
-                                "))['total'] ?? 0;
+                                ");
                             ?>
 
                             <tr class="hover:bg-slate-50">
@@ -397,7 +400,7 @@ require_once "../../includes/navbar.php";
                                 </td>
                             </tr>
 
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
                             <td colspan="9" class="px-4 py-10 text-center text-slate-500">
@@ -460,4 +463,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

@@ -1,13 +1,14 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/notification.php";
-require_once "../../includes/email_gateway.php";
-require_once "../../includes/whatsapp_gateway.php";
-require_once "../../includes/upload.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/notification.php";
+require_once __DIR__ . "/../../includes/email_gateway.php";
+require_once __DIR__ . "/../../includes/whatsapp_gateway.php";
+require_once __DIR__ . "/../../includes/upload.php";
+require_once __DIR__ . "/pengguna_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -15,7 +16,7 @@ cek_role(['super_admin', 'admin_akademik']);
 $page_title = "Tambah Pengguna";
 $page_subtitle = "Menambahkan akun pengguna sistem";
 
-$roles = mysqli_query($conn, "SELECT * FROM roles ORDER BY nama_role ASC");
+$roles = pengguna_all($conn, "SELECT * FROM roles ORDER BY nama_role ASC");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_role = intval($_POST['id_role'] ?? 0);
@@ -30,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($_FILES['foto']['name'])) {
         $upload = upload_file(
             $_FILES['foto'],
-            "../../uploads/pengguna",
+            __DIR__ . "/../../uploads/pengguna",
             ['jpg', 'jpeg', 'png'],
             2097152
         );
@@ -45,18 +46,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($id_role <= 0 || empty($username) || empty($password) || empty($nama_lengkap)) {
         set_alert("error", "Role, username, password, dan nama lengkap wajib diisi.");
     } else {
-        $cek = mysqli_query($conn, "SELECT id_user FROM users WHERE username='$username' LIMIT 1");
+        $cek = pengguna_one($conn, "SELECT id_user FROM users WHERE username='$username' LIMIT 1");
+        $cek_email = !empty($email)
+            ? pengguna_one($conn, "SELECT id_user FROM users WHERE email='$email' LIMIT 1")
+            : null;
 
-        if (mysqli_num_rows($cek) > 0) {
+        if ($cek) {
             set_alert("error", "Username sudah digunakan.");
+        } elseif ($cek_email) {
+            set_alert("error", "Email sudah digunakan pengguna lain.");
         } else {
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
+            $email_sql = pengguna_sql_value($conn, $email);
+            $no_hp_sql = pengguna_sql_value($conn, $no_hp);
+            $foto_sql = pengguna_sql_value($conn, $foto);
 
-            $simpan = mysqli_query($conn, "
+            $simpan = pengguna_execute($conn, "
                 INSERT INTO users 
                 (id_role, username, password, nama_lengkap, email, no_hp, foto, status)
                 VALUES 
-                ('$id_role', '$username', '$password_hash', '$nama_lengkap', '$email', '$no_hp', '$foto', '$status')
+                ('$id_role', '$username', '$password_hash', '$nama_lengkap', $email_sql, $no_hp_sql, $foto_sql, '$status')
             ");
 
             if ($simpan) {
@@ -159,15 +168,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header("Location: data_pengguna.php");
                 exit;
             } else {
-                set_alert("error", "Pengguna gagal ditambahkan.");
+                set_alert("error", "Pengguna gagal ditambahkan. Periksa kembali username, email, dan data wajib lainnya.");
             }
         }
     }
 }
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -192,11 +201,11 @@ require_once "../../includes/navbar.php";
                 <select name="id_role" required
                     class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-2 focus:ring-blue-600 outline-none">
                     <option value="">-- Pilih Role --</option>
-                    <?php while ($role = mysqli_fetch_assoc($roles)): ?>
+                    <?php foreach ($roles as $role): ?>
                         <option value="<?= $role['id_role']; ?>">
                             <?= htmlspecialchars(str_replace('_', ' ', $role['nama_role'])); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -268,4 +277,4 @@ require_once "../../includes/navbar.php";
     </section>
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

@@ -123,7 +123,6 @@ $q_negara = get_ref_options($conn, 'negara');
 $q_jalur_masuk = get_ref_options($conn, 'jalur_masuk');
 $q_jenis_pendaftaran = get_ref_options($conn, 'jenis_pendaftaran');
 $q_status_mahasiswa = get_ref_options($conn, 'status_mahasiswa');
-$q_wilayah = get_ref_options($conn, 'wilayah');
 $q_pekerjaan_ayah = get_ref_options($conn, 'pekerjaan');
 $q_pekerjaan_ibu = get_ref_options($conn, 'pekerjaan');
 $q_penghasilan_ayah = get_ref_options($conn, 'penghasilan');
@@ -281,6 +280,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $foto_db = mysqli_real_escape_string($conn, $foto ?? '');
                     $status_db = mysqli_real_escape_string($conn, $status);
 
+                    $password_hash = "";
                     $password_sql = "";
                     if (!empty($password)) {
                         $password_hash = password_hash($password, PASSWORD_DEFAULT);

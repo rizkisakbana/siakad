@@ -1,11 +1,12 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/notification.php";
-require_once "../../includes/email_gateway.php";
-require_once "../../includes/whatsapp_gateway.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/notification.php";
+require_once __DIR__ . "/../../includes/email_gateway.php";
+require_once __DIR__ . "/../../includes/whatsapp_gateway.php";
+require_once __DIR__ . "/pengguna_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -24,18 +25,16 @@ if ($id_user == $_SESSION['id_user']) {
     exit;
 }
 
-$cek = mysqli_query($conn, "SELECT * FROM users WHERE id_user='$id_user' LIMIT 1");
+$data = pengguna_one($conn, "SELECT * FROM users WHERE id_user='$id_user' LIMIT 1");
 
-if (mysqli_num_rows($cek) < 1) {
+if (!$data) {
     set_alert("error", "Data pengguna tidak ditemukan.");
     header("Location: data_pengguna.php");
     exit;
 }
 
-$data = mysqli_fetch_assoc($cek);
-
-$cek_dosen = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS total FROM dosen WHERE id_user='$id_user'"))['total'] ?? 0;
-$cek_mahasiswa = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS total FROM mahasiswa WHERE id_user='$id_user'"))['total'] ?? 0;
+$cek_dosen = pengguna_count($conn, "SELECT COUNT(*) AS total FROM dosen WHERE id_user='$id_user'");
+$cek_mahasiswa = pengguna_count($conn, "SELECT COUNT(*) AS total FROM mahasiswa WHERE id_user='$id_user'");
 
 if ($cek_dosen > 0 || $cek_mahasiswa > 0) {
     set_alert("warning", "Pengguna tidak dapat dihapus karena sudah terhubung dengan data dosen atau mahasiswa.");
@@ -77,7 +76,7 @@ if (!empty($no_hp)) {
     ); 
 }
 
-$hapus = mysqli_query($conn, "DELETE FROM users WHERE id_user='$id_user'");
+$hapus = pengguna_execute($conn, "DELETE FROM users WHERE id_user='$id_user'");
 
 if ($hapus) {
     simpan_log(

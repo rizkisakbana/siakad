@@ -1,10 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/neofeeder_helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/neofeeder_helper.php";
+require_once __DIR__ . "/neofeeder_admin_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -16,31 +17,23 @@ $config = get_neofeeder_config($conn);
 
 function hitung_data_pull($conn, $tabel, $field_feeder = 'id_feeder')
 {
-    $cek_tabel = mysqli_query($conn, "SHOW TABLES LIKE '$tabel'");
-    if (!$cek_tabel || mysqli_num_rows($cek_tabel) < 1) {
+    $tabel = preg_replace('/[^a-zA-Z0-9_]/', '', (string) $tabel);
+    $field_feeder = preg_replace('/[^a-zA-Z0-9_]/', '', (string) $field_feeder);
+
+    if (!nf_table_exists($conn, $tabel)) {
         return ['total' => 0, 'sinkron' => 0, 'belum' => 0];
     }
 
-    $total = 0;
+    $total = nf_count($conn, "SELECT COUNT(*) AS total FROM `$tabel`");
     $sinkron = 0;
 
-    $q_total = mysqli_query($conn, "SELECT COUNT(*) AS total FROM $tabel");
-    if ($q_total) {
-        $total = mysqli_fetch_assoc($q_total)['total'] ?? 0;
-    }
-
-    $cek_field = mysqli_query($conn, "SHOW COLUMNS FROM $tabel LIKE '$field_feeder'");
-    if ($cek_field && mysqli_num_rows($cek_field) > 0) {
-        $q_sinkron = mysqli_query($conn, "
+    if (nf_column_exists($conn, $tabel, $field_feeder)) {
+        $sinkron = nf_count($conn, "
             SELECT COUNT(*) AS total
-            FROM $tabel
-            WHERE $field_feeder IS NOT NULL
-            AND $field_feeder != ''
+            FROM `$tabel`
+            WHERE `$field_feeder` IS NOT NULL
+            AND `$field_feeder` != ''
         ");
-
-        if ($q_sinkron) {
-            $sinkron = mysqli_fetch_assoc($q_sinkron)['total'] ?? 0;
-        }
     }
 
     return [
@@ -54,18 +47,15 @@ function hitung_ref($conn, $jenis_ref)
 {
     $jenis_ref = mysqli_real_escape_string($conn, $jenis_ref);
 
-    $cek_tabel = mysqli_query($conn, "SHOW TABLES LIKE 'ref_pddikti'");
-    if (!$cek_tabel || mysqli_num_rows($cek_tabel) < 1) {
+    if (!nf_table_exists($conn, 'ref_pddikti')) {
         return ['total' => 0, 'sinkron' => 0, 'belum' => 0];
     }
 
-    $q = mysqli_query($conn, "
+    $total = nf_count($conn, "
         SELECT COUNT(*) AS total
         FROM ref_pddikti
         WHERE jenis_ref = '$jenis_ref'
     ");
-
-    $total = $q ? (mysqli_fetch_assoc($q)['total'] ?? 0) : 0;
 
     return [
         'total' => $total,
@@ -77,15 +67,8 @@ function hitung_ref($conn, $jenis_ref)
 $total_log = 0;
 $total_log_failed = 0;
 
-$q_log = mysqli_query($conn, "SELECT COUNT(*) AS total FROM neofeeder_log");
-if ($q_log) {
-    $total_log = mysqli_fetch_assoc($q_log)['total'] ?? 0;
-}
-
-$q_log_failed = mysqli_query($conn, "SELECT COUNT(*) AS total FROM neofeeder_log WHERE status = 'failed'");
-if ($q_log_failed) {
-    $total_log_failed = mysqli_fetch_assoc($q_log_failed)['total'] ?? 0;
-}
+$total_log = nf_count($conn, "SELECT COUNT(*) AS total FROM neofeeder_log");
+$total_log_failed = nf_count($conn, "SELECT COUNT(*) AS total FROM neofeeder_log WHERE status = 'failed'");
 
 $status_class = "bg-red-100 text-red-700";
 $status_label = "Disconnected";
@@ -292,9 +275,9 @@ simpan_log(
     "Neo Feeder"
 );
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -517,4 +500,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

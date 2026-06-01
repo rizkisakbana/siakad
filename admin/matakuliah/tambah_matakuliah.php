@@ -1,17 +1,20 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/matakuliah_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
 
+/** @var mysqli $conn */
+
 $page_title = "Tambah Mata Kuliah";
 $page_subtitle = "Menambahkan master data mata kuliah berdasarkan kurikulum";
 
-$data_kurikulum = mysqli_query($conn, "
+$data_kurikulum = matakuliah_fetch_all($conn, "
     SELECT 
         kurikulum.*,
         prodi.kode_prodi,
@@ -42,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (($sks_teori + $sks_praktik) <= 0) {
         set_alert("error", "Total SKS harus lebih dari 0.");
     } else {
-        $cek_kurikulum = mysqli_query($conn, "
+        $data_kur = matakuliah_query_one($conn, "
             SELECT 
                 kurikulum.*,
                 prodi.nama_prodi
@@ -52,12 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             LIMIT 1
         ");
 
-        if (mysqli_num_rows($cek_kurikulum) < 1) {
+        if (!$data_kur) {
             set_alert("error", "Kurikulum tidak ditemukan.");
         } else {
-            $data_kur = mysqli_fetch_assoc($cek_kurikulum);
-
-            $cek_duplikat = mysqli_query($conn, "
+            $cek_duplikat = matakuliah_query_exists($conn, "
                 SELECT id_mk 
                 FROM mata_kuliah
                 WHERE id_kurikulum = '$id_kurikulum'
@@ -65,10 +66,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 LIMIT 1
             ");
 
-            if (mysqli_num_rows($cek_duplikat) > 0) {
+            if ($cek_duplikat) {
                 set_alert("error", "Kode mata kuliah sudah digunakan pada kurikulum tersebut.");
             } else {
-                $simpan = mysqli_query($conn, "
+                $simpan = matakuliah_execute($conn, "
                     INSERT INTO mata_kuliah
                     (
                         id_kurikulum,
@@ -112,9 +113,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -151,14 +152,14 @@ require_once "../../includes/navbar.php";
                             class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-2 focus:ring-blue-600 outline-none">
                         <option value="">-- Pilih Kurikulum --</option>
 
-                        <?php while ($kurikulum = mysqli_fetch_assoc($data_kurikulum)): ?>
+                        <?php foreach ($data_kurikulum as $kurikulum): ?>
                             <option value="<?= $kurikulum['id_kurikulum']; ?>">
                                 <?= htmlspecialchars($kurikulum['nama_kurikulum']); ?> |
                                 <?= htmlspecialchars($kurikulum['nama_prodi']); ?> -
                                 <?= htmlspecialchars($kurikulum['jenjang']); ?> |
                                 Tahun <?= htmlspecialchars($kurikulum['tahun_kurikulum']); ?>
                             </option>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     </select>
 
                     <p class="text-xs text-slate-500 mt-2">
@@ -346,4 +347,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>
