@@ -1,7 +1,9 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/internal_module_helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/internal_module_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -14,7 +16,7 @@ $cards = [
 ];
 
 $rows = [];
-$q = mysqli_query($conn, "
+$data_mahasiswa = internal_fetch_all($conn, "
     SELECT m.nim, m.nama_mahasiswa, m.angkatan, m.semester, m.status_mahasiswa, p.nama_prodi
     FROM mahasiswa m
     LEFT JOIN prodi p ON p.id_prodi = m.id_prodi
@@ -22,21 +24,19 @@ $q = mysqli_query($conn, "
     LIMIT 50
 ");
 
-if ($q) {
-    while ($r = mysqli_fetch_assoc($q)) {
-        $rows[] = [
-            htmlspecialchars($r['nim'] ?? '-'),
-            htmlspecialchars($r['nama_mahasiswa'] ?? '-'),
-            htmlspecialchars($r['nama_prodi'] ?? '-'),
-            htmlspecialchars($r['angkatan'] ?? '-'),
-            htmlspecialchars('Semester ' . ($r['semester'] ?? '-')),
-            internal_badge($r['status_mahasiswa'] ?? '-'),
-        ];
-    }
+foreach ($data_mahasiswa as $r) {
+    $rows[] = [
+        htmlspecialchars($r['nim'] ?? '-'),
+        htmlspecialchars($r['nama_mahasiswa'] ?? '-'),
+        htmlspecialchars($r['nama_prodi'] ?? '-'),
+        htmlspecialchars($r['angkatan'] ?? '-'),
+        htmlspecialchars('Semester ' . ($r['semester'] ?? '-')),
+        internal_badge($r['status_mahasiswa'] ?? '-'),
+    ];
 }
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 render_internal_page('Laporan Mahasiswa', 'Rekap master data mahasiswa berdasarkan prodi, angkatan, dan status.', $cards, ['NIM', 'Nama', 'Prodi', 'Angkatan', 'Semester', 'Status'], $rows);
-require_once "../../includes/footer.php";
+require_once __DIR__ . "/../../includes/footer.php";

@@ -1,9 +1,12 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/mahasiswa_helper.php";
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
+
+/** @var mysqli $conn */
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -16,7 +19,7 @@ if (strlen($keyword) < 2) {
 
 $keyword = mysqli_real_escape_string($conn, $keyword);
 
-$query = mysqli_query($conn, "
+$rows = mahasiswa_fetch_all($conn, "
     SELECT 
         kec.id_feeder AS id_kecamatan,
         kec.nama_ref AS nama_kecamatan,
@@ -56,37 +59,34 @@ $query = mysqli_query($conn, "
 
 $data = [];
 
-if ($query) {
-    while ($row = mysqli_fetch_assoc($query)) {
+foreach ($rows as $row) {
+    $nama_kecamatan = $row['nama_kecamatan'] ?? '';
+    $nama_kota = $row['nama_kota'] ?? '';
+    $nama_provinsi = $row['nama_provinsi'] ?? '';
 
-        $nama_kecamatan = $row['nama_kecamatan'] ?? '';
-        $nama_kota = $row['nama_kota'] ?? '';
-        $nama_provinsi = $row['nama_provinsi'] ?? '';
+    $label_parts = [];
 
-        $label_parts = [];
-
-        if (!empty($nama_kecamatan)) {
-            $label_parts[] = $nama_kecamatan;
-        }
-
-        if (!empty($nama_kota)) {
-            $label_parts[] = $nama_kota;
-        }
-
-        if (!empty($nama_provinsi)) {
-            $label_parts[] = $nama_provinsi;
-        }
-
-        $label = implode(' - ', $label_parts);
-
-        $data[] = [
-            'id' => $row['id_kecamatan'],
-            'text' => $label . ' (' . $row['id_kecamatan'] . ')',
-            'kecamatan' => $nama_kecamatan,
-            'kota' => $nama_kota,
-            'provinsi' => $nama_provinsi
-        ];
+    if (!empty($nama_kecamatan)) {
+        $label_parts[] = $nama_kecamatan;
     }
+
+    if (!empty($nama_kota)) {
+        $label_parts[] = $nama_kota;
+    }
+
+    if (!empty($nama_provinsi)) {
+        $label_parts[] = $nama_provinsi;
+    }
+
+    $label = implode(' - ', $label_parts);
+
+    $data[] = [
+        'id' => $row['id_kecamatan'],
+        'text' => $label . ' (' . $row['id_kecamatan'] . ')',
+        'kecamatan' => $nama_kecamatan,
+        'kota' => $nama_kota,
+        'provinsi' => $nama_provinsi
+    ];
 }
 
 echo json_encode($data, JSON_UNESCAPED_UNICODE);

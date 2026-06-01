@@ -1,9 +1,12 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../includes/akademik_inti_helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/akademik_inti_helper.php";
+require_once __DIR__ . "/jadwal_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -15,15 +18,14 @@ if ($id_jadwal <= 0) {
     exit;
 }
 
-$q = mysqli_query($conn, "SELECT * FROM jadwal_kuliah WHERE id_jadwal='$id_jadwal' LIMIT 1");
-if (!$q || mysqli_num_rows($q) < 1) {
+$data = jadwal_query_one($conn, "SELECT * FROM jadwal_kuliah WHERE id_jadwal='$id_jadwal' LIMIT 1");
+if (!$data) {
     set_alert('error', 'Data jadwal tidak ditemukan.');
     header('Location: data_jadwal.php');
     exit;
 }
 
-$cek_krs = mysqli_query($conn, "SELECT COUNT(*) total FROM krs_detail WHERE id_jadwal='$id_jadwal'");
-$total_krs = $cek_krs ? (int)(mysqli_fetch_assoc($cek_krs)['total'] ?? 0) : 0;
+$total_krs = jadwal_count($conn, "SELECT COUNT(*) total FROM krs_detail WHERE id_jadwal='$id_jadwal'");
 if ($total_krs > 0) {
     set_alert('error', 'Jadwal tidak dapat dihapus karena sudah digunakan pada KRS. Nonaktifkan jadwal jika tidak dipakai lagi.');
     header('Location: detail_jadwal.php?id=' . $id_jadwal);

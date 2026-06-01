@@ -1,8 +1,9 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/log_aktivitas.php";
-require_once "../../vendor/autoload.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../vendor/autoload.php";
+require_once __DIR__ . "/kelas_helper.php";
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -13,13 +14,16 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
 
+/** @var mysqli $conn */
+
 $id_kelas = intval($_GET['id'] ?? 0);
 
 if ($id_kelas <= 0) {
     die("ID kelas tidak valid.");
 }
 
-$q_kelas = mysqli_query($conn, "
+
+$kelas = kelas_query_one($conn, "
     SELECT 
         kelas.*,
         prodi.nama_prodi,
@@ -34,11 +38,9 @@ $q_kelas = mysqli_query($conn, "
     LIMIT 1
 ");
 
-if (!$q_kelas || mysqli_num_rows($q_kelas) < 1) {
+if (!$kelas) {
     die("Data kelas tidak ditemukan.");
 }
-
-$kelas = mysqli_fetch_assoc($q_kelas);
 
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();

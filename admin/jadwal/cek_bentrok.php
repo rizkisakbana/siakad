@@ -1,6 +1,9 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/jadwal_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -38,18 +41,30 @@ $time_clause = "
 ";
 
 if ($id_kelas > 0) {
-    $q = mysqli_query($conn, "SELECT id_jadwal FROM jadwal_kuliah WHERE id_kelas = '$id_kelas' AND $time_clause LIMIT 1");
-    if ($q && mysqli_num_rows($q) > 0) $errors[] = 'Kelas sudah memiliki jadwal pada waktu tersebut.';
+    $bentrok_kelas = jadwal_query_exists($conn, "SELECT id_jadwal FROM jadwal_kuliah WHERE id_kelas = '$id_kelas' AND $time_clause LIMIT 1");
+    if ($bentrok_kelas === null) {
+        $errors[] = 'Validasi jadwal kelas gagal diproses.';
+    } elseif ($bentrok_kelas) {
+        $errors[] = 'Kelas sudah memiliki jadwal pada waktu tersebut.';
+    }
 }
 
 if ($id_dosen > 0) {
-    $q = mysqli_query($conn, "SELECT id_jadwal FROM jadwal_kuliah WHERE id_dosen = '$id_dosen' AND $time_clause LIMIT 1");
-    if ($q && mysqli_num_rows($q) > 0) $errors[] = 'Dosen sudah mengajar pada waktu tersebut.';
+    $bentrok_dosen = jadwal_query_exists($conn, "SELECT id_jadwal FROM jadwal_kuliah WHERE id_dosen = '$id_dosen' AND $time_clause LIMIT 1");
+    if ($bentrok_dosen === null) {
+        $errors[] = 'Validasi jadwal dosen gagal diproses.';
+    } elseif ($bentrok_dosen) {
+        $errors[] = 'Dosen sudah mengajar pada waktu tersebut.';
+    }
 }
 
 if ($id_ruangan > 0) {
-    $q = mysqli_query($conn, "SELECT id_jadwal FROM jadwal_kuliah WHERE id_ruangan = '$id_ruangan' AND $time_clause LIMIT 1");
-    if ($q && mysqli_num_rows($q) > 0) $errors[] = 'Ruangan sudah digunakan pada waktu tersebut.';
+    $bentrok_ruangan = jadwal_query_exists($conn, "SELECT id_jadwal FROM jadwal_kuliah WHERE id_ruangan = '$id_ruangan' AND $time_clause LIMIT 1");
+    if ($bentrok_ruangan === null) {
+        $errors[] = 'Validasi jadwal ruangan gagal diproses.';
+    } elseif ($bentrok_ruangan) {
+        $errors[] = 'Ruangan sudah digunakan pada waktu tersebut.';
+    }
 }
 
 echo json_encode([

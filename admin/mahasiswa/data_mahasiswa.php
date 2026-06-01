@@ -1,8 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/mahasiswa_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -48,31 +51,31 @@ if (!empty($filter_status)) {
     $where .= " AND mahasiswa.status_mahasiswa = '$filter_status'";
 }
 
-$total_mahasiswa = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_mahasiswa = mahasiswa_count($conn, "
     SELECT COUNT(*) AS total FROM mahasiswa
-"))['total'] ?? 0;
+");
 
-$total_aktif = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_aktif = mahasiswa_count($conn, "
     SELECT COUNT(*) AS total FROM mahasiswa WHERE status_mahasiswa = 'aktif'
-"))['total'] ?? 0;
+");
 
-$total_lulus = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_lulus = mahasiswa_count($conn, "
     SELECT COUNT(*) AS total FROM mahasiswa WHERE status_mahasiswa = 'lulus'
-"))['total'] ?? 0;
+");
 
-$total_nonaktif = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_nonaktif = mahasiswa_count($conn, "
     SELECT COUNT(*) AS total 
     FROM mahasiswa 
     WHERE status_mahasiswa IN ('nonaktif','cuti','drop out','mengundurkan diri','pindah')
-"))['total'] ?? 0;
+");
 
-$data_prodi = mysqli_query($conn, "
+$data_prodi = mahasiswa_fetch_all($conn, "
     SELECT * FROM prodi
     WHERE status = 'aktif'
     ORDER BY nama_prodi ASC
 ");
 
-$data_kelas = mysqli_query($conn, "
+$data_kelas = mahasiswa_fetch_all($conn, "
     SELECT 
         kelas.*,
         prodi.nama_prodi,
@@ -83,7 +86,7 @@ $data_kelas = mysqli_query($conn, "
     ORDER BY prodi.nama_prodi ASC, kelas.nama_kelas ASC
 ");
 
-$data_angkatan = mysqli_query($conn, "
+$data_angkatan = mahasiswa_fetch_all($conn, "
     SELECT DISTINCT angkatan 
     FROM mahasiswa 
     WHERE angkatan IS NOT NULL AND angkatan != ''
@@ -97,18 +100,18 @@ if ($page < 1)
 
 $offset = ($page - 1) * $limit;
 
-$total_data_filter = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_data_filter = mahasiswa_count($conn, "
     SELECT COUNT(*) AS total
     FROM mahasiswa
     LEFT JOIN prodi ON mahasiswa.id_prodi = prodi.id_prodi
     LEFT JOIN kelas ON mahasiswa.id_kelas = kelas.id_kelas
     LEFT JOIN users ON mahasiswa.id_user = users.id_user
     $where
-"))['total'] ?? 0;
+");
 
 $total_page = ceil($total_data_filter / $limit);
 
-$data_mahasiswa = mysqli_query($conn, "
+$data_mahasiswa = mahasiswa_fetch_all($conn, "
     SELECT 
         mahasiswa.*,
         prodi.kode_prodi,
@@ -136,9 +139,9 @@ $query_string = http_build_query([
     'status_mahasiswa' => $filter_status
 ]);
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -225,32 +228,32 @@ require_once "../../includes/navbar.php";
             <select name="prodi"
                 class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-2 focus:ring-blue-600 outline-none">
                 <option value="0">Semua Prodi</option>
-                <?php while ($prodi = mysqli_fetch_assoc($data_prodi)): ?>
+                <?php foreach ($data_prodi as $prodi): ?>
                     <option value="<?= $prodi['id_prodi']; ?>" <?= $filter_prodi == $prodi['id_prodi'] ? 'selected' : ''; ?>>
                         <?= htmlspecialchars($prodi['nama_prodi']); ?> - <?= htmlspecialchars($prodi['jenjang']); ?>
                     </option>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </select>
 
             <select name="kelas"
                 class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-2 focus:ring-blue-600 outline-none">
                 <option value="0">Semua Kelas</option>
-                <?php while ($kelas = mysqli_fetch_assoc($data_kelas)): ?>
+                <?php foreach ($data_kelas as $kelas): ?>
                     <option value="<?= $kelas['id_kelas']; ?>" <?= $filter_kelas == $kelas['id_kelas'] ? 'selected' : ''; ?>>
                         <?= htmlspecialchars($kelas['nama_kelas']); ?> - <?= htmlspecialchars($kelas['nama_prodi']); ?>
                     </option>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </select>
 
             <select name="angkatan"
                 class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:ring-2 focus:ring-blue-600 outline-none">
                 <option value="">Semua Angkatan</option>
-                <?php while ($angkatan = mysqli_fetch_assoc($data_angkatan)): ?>
+                <?php foreach ($data_angkatan as $angkatan): ?>
                     <option value="<?= htmlspecialchars($angkatan['angkatan']); ?>"
                         <?= $filter_angkatan == $angkatan['angkatan'] ? 'selected' : ''; ?>>
                         <?= htmlspecialchars($angkatan['angkatan']); ?>
                     </option>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </select>
 
             <select name="status_mahasiswa"
@@ -292,9 +295,9 @@ require_once "../../includes/navbar.php";
                 </thead>
 
                 <tbody class="divide-y divide-slate-100">
-                    <?php if ($data_mahasiswa && mysqli_num_rows($data_mahasiswa) > 0): ?>
+                    <?php if (!empty($data_mahasiswa)): ?>
                         <?php $no = $offset + 1; ?>
-                        <?php while ($row = mysqli_fetch_assoc($data_mahasiswa)): ?>
+                        <?php foreach ($data_mahasiswa as $row): ?>
 
                             <tr class="hover:bg-slate-50">
                                 <td class="px-4 py-3"><?= $no++; ?></td>
@@ -426,7 +429,7 @@ require_once "../../includes/navbar.php";
                                 </td>
                             </tr>
 
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
                             <td colspan="9" class="px-4 py-10 text-center text-slate-500">
@@ -485,4 +488,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

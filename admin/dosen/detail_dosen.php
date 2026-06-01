@@ -1,9 +1,12 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/log_aktivitas.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/log_aktivitas.php";
+require_once __DIR__ . "/dosen_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -19,7 +22,7 @@ if ($id_dosen <= 0) {
     exit;
 }
 
-$query = mysqli_query($conn, "
+$data = dosen_query_one($conn, "
     SELECT 
         dosen.*,
         users.username,
@@ -38,38 +41,36 @@ $query = mysqli_query($conn, "
     LIMIT 1
 ");
 
-if (mysqli_num_rows($query) < 1) {
+if (!$data) {
     set_alert("error", "Data dosen tidak ditemukan.");
     header("Location: data_dosen.php");
     exit;
 }
 
-$data = mysqli_fetch_assoc($query);
-
-$total_jadwal = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_jadwal = dosen_count($conn, "
     SELECT COUNT(*) AS total 
     FROM jadwal_kuliah 
     WHERE id_dosen = '$id_dosen'
-"))['total'] ?? 0;
+");
 
-$total_kelas = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_kelas = dosen_count($conn, "
     SELECT COUNT(DISTINCT id_kelas) AS total 
     FROM jadwal_kuliah 
     WHERE id_dosen = '$id_dosen'
-"))['total'] ?? 0;
+");
 
-$total_mk = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_mk = dosen_count($conn, "
     SELECT COUNT(DISTINCT id_mk) AS total 
     FROM jadwal_kuliah 
     WHERE id_dosen = '$id_dosen'
-"))['total'] ?? 0;
+");
 
-$total_penugasan = mysqli_fetch_assoc(mysqli_query($conn, "
+$total_penugasan = dosen_count($conn, "
     SELECT COUNT(*) AS total
     FROM dosen_penugasan_feeder
     WHERE id_dosen = '$id_dosen'
        OR id_dosen_feeder = '" . mysqli_real_escape_string($conn, $data['id_dosen_feeder'] ?: ($data['id_feeder'] ?? '')) . "'
-"))['total'] ?? 0;
+");
 
 $nama_lengkap_dosen = trim(($data['gelar_depan'] ?? '') . ' ' . $data['nama_dosen'] . ' ' . ($data['gelar_belakang'] ?? ''));
 
@@ -80,9 +81,9 @@ simpan_log(
     "Dosen"
 );
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -385,7 +386,7 @@ require_once "../../includes/navbar.php";
                 <h3 class="text-lg font-bold text-slate-800 mb-4">Penugasan PDDikti</h3>
 
                 <?php
-                $q_penugasan = mysqli_query($conn, "
+                $data_penugasan = dosen_fetch_all($conn, "
                     SELECT *
                     FROM dosen_penugasan_feeder
                     WHERE id_dosen = '$id_dosen'
@@ -396,8 +397,8 @@ require_once "../../includes/navbar.php";
                 ?>
 
                 <div class="space-y-3 text-sm">
-                    <?php if ($q_penugasan && mysqli_num_rows($q_penugasan) > 0): ?>
-                        <?php while ($p = mysqli_fetch_assoc($q_penugasan)): ?>
+                    <?php if (!empty($data_penugasan)): ?>
+                        <?php foreach ($data_penugasan as $p): ?>
                             <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
                                 <p class="font-bold text-slate-800"><?= htmlspecialchars($p['nama_program_studi'] ?? '-'); ?></p>
                                 <p class="mt-1 text-xs text-slate-500">
@@ -408,7 +409,7 @@ require_once "../../includes/navbar.php";
                                     Surat: <?= htmlspecialchars($p['nomor_surat_tugas'] ?: '-'); ?>
                                 </p>
                             </div>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     <?php else: ?>
                         <p class="text-sm text-slate-500">Belum ada data penugasan dari NeoFeeder.</p>
                     <?php endif; ?>
@@ -455,4 +456,4 @@ require_once "../../includes/navbar.php";
 
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

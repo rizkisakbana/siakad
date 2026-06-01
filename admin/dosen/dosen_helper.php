@@ -10,6 +10,53 @@ function dosen_db_value($conn, $value)
     return "'" . mysqli_real_escape_string($conn, $value) . "'";
 }
 
+function dosen_count($conn, $sql)
+{
+    $q = mysqli_query($conn, $sql);
+    if (!$q) {
+        return 0;
+    }
+
+    $row = mysqli_fetch_assoc($q);
+    return (int)($row['total'] ?? 0);
+}
+
+function dosen_query_one($conn, $sql)
+{
+    $q = mysqli_query($conn, $sql);
+    if (!$q || mysqli_num_rows($q) < 1) {
+        return null;
+    }
+
+    return mysqli_fetch_assoc($q);
+}
+
+function dosen_query_exists($conn, $sql)
+{
+    $q = mysqli_query($conn, $sql);
+    if (!$q) {
+        return null;
+    }
+
+    return mysqli_num_rows($q) > 0;
+}
+
+function dosen_fetch_all($conn, $sql)
+{
+    $q = mysqli_query($conn, $sql);
+    $items = [];
+
+    if (!$q) {
+        return $items;
+    }
+
+    while ($row = mysqli_fetch_assoc($q)) {
+        $items[] = $row;
+    }
+
+    return $items;
+}
+
 function dosen_ref_options($conn, $jenis_ref)
 {
     $jenis_ref = mysqli_real_escape_string($conn, $jenis_ref);

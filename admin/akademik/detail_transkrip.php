@@ -1,8 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/alert.php";
-require_once "../../includes/helper.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/internal_module_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -14,7 +17,7 @@ if ($id_mahasiswa <= 0) {
     exit;
 }
 
-$q_mahasiswa = mysqli_query($conn, "
+$mahasiswa = internal_query_one($conn, "
     SELECT m.*, p.nama_prodi, p.jenjang
     FROM mahasiswa m
     LEFT JOIN prodi p ON p.id_prodi = m.id_prodi
@@ -22,17 +25,16 @@ $q_mahasiswa = mysqli_query($conn, "
     LIMIT 1
 ");
 
-if (!$q_mahasiswa || mysqli_num_rows($q_mahasiswa) < 1) {
+if (!$mahasiswa) {
     set_alert("error", "Data mahasiswa tidak ditemukan.");
     header("Location: transkrip_mahasiswa.php");
     exit;
 }
 
-$mahasiswa = mysqli_fetch_assoc($q_mahasiswa);
 $page_title = "Detail Transkrip";
 $page_subtitle = "Rincian transkrip mahasiswa";
 
-$q_rows = mysqli_query($conn, "
+$data_transkrip = internal_fetch_all($conn, "
     SELECT t.*, ta.tahun, ta.semester
     FROM transkrip_mahasiswa t
     LEFT JOIN tahun_akademik ta ON ta.id_tahun = t.id_tahun
@@ -45,22 +47,20 @@ $total_mutu = 0;
 $total_mk = 0;
 $rows = [];
 
-if ($q_rows) {
-    while ($r = mysqli_fetch_assoc($q_rows)) {
-        $sks = (int)($r['sks_mk'] ?? 0);
-        $indeks = (float)($r['nilai_indeks'] ?? 0);
-        $total_sks += $sks;
-        $total_mutu += $sks * $indeks;
-        $total_mk++;
-        $rows[] = $r;
-    }
+foreach ($data_transkrip as $r) {
+    $sks = (int)($r['sks_mk'] ?? 0);
+    $indeks = (float)($r['nilai_indeks'] ?? 0);
+    $total_sks += $sks;
+    $total_mutu += $sks * $indeks;
+    $total_mk++;
+    $rows[] = $r;
 }
 
 $ipk = $total_sks > 0 ? round($total_mutu / $total_sks, 2) : 0;
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -129,4 +129,4 @@ require_once "../../includes/navbar.php";
     </section>
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>

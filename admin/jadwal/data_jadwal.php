@@ -1,8 +1,11 @@
 <?php
-require_once "../../includes/auth.php";
-require_once "../../config/database.php";
-require_once "../../includes/helper.php";
-require_once "../../includes/alert.php";
+require_once __DIR__ . "/../../includes/auth.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../../includes/helper.php";
+require_once __DIR__ . "/../../includes/alert.php";
+require_once __DIR__ . "/jadwal_helper.php";
+
+/** @var mysqli $conn */
 
 cek_login();
 cek_role(['super_admin', 'admin_akademik']);
@@ -31,14 +34,14 @@ if ($filter_status !== '') {
     $where .= " AND j.status = '$filter_status'";
 }
 
-$total_jadwal = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) total FROM jadwal_kuliah"))['total'] ?? 0;
-$total_aktif = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) total FROM jadwal_kuliah WHERE status='aktif'"))['total'] ?? 0;
-$total_kelas_kuliah = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) total FROM kelas_kuliah"))['total'] ?? 0;
-$total_pengajar = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) total FROM dosen_pengajar_kelas"))['total'] ?? 0;
+$total_jadwal = jadwal_count($conn, "SELECT COUNT(*) total FROM jadwal_kuliah");
+$total_aktif = jadwal_count($conn, "SELECT COUNT(*) total FROM jadwal_kuliah WHERE status='aktif'");
+$total_kelas_kuliah = jadwal_count($conn, "SELECT COUNT(*) total FROM kelas_kuliah");
+$total_pengajar = jadwal_count($conn, "SELECT COUNT(*) total FROM dosen_pengajar_kelas");
 
-$data_tahun = mysqli_query($conn, "SELECT * FROM tahun_akademik ORDER BY status ASC, tahun DESC, semester ASC");
+$data_tahun = jadwal_fetch_all($conn, "SELECT * FROM tahun_akademik ORDER BY status ASC, tahun DESC, semester ASC");
 
-$q = mysqli_query($conn, "
+$data_jadwal = jadwal_fetch_all($conn, "
     SELECT
         j.*,
         ta.tahun,
@@ -60,9 +63,9 @@ $q = mysqli_query($conn, "
     ORDER BY ta.tahun DESC, FIELD(j.hari,'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'), j.jam_mulai ASC
 ");
 
-require_once "../../includes/header.php";
-require_once "../../includes/sidebar.php";
-require_once "../../includes/navbar.php";
+require_once __DIR__ . "/../../includes/header.php";
+require_once __DIR__ . "/../../includes/sidebar.php";
+require_once __DIR__ . "/../../includes/navbar.php";
 ?>
 
 <main class="lg:ml-[270px] p-4 sm:p-6 lg:p-8">
@@ -107,11 +110,11 @@ require_once "../../includes/navbar.php";
             <input type="text" name="keyword" value="<?= htmlspecialchars($keyword); ?>" placeholder="Cari jadwal..." class="w-full rounded-xl border border-slate-300 px-4 py-3">
             <select name="tahun" class="w-full rounded-xl border border-slate-300 px-4 py-3">
                 <option value="0">Semua Tahun</option>
-                <?php while ($ta = mysqli_fetch_assoc($data_tahun)): ?>
+                <?php foreach ($data_tahun as $ta): ?>
                     <option value="<?= $ta['id_tahun']; ?>" <?= $filter_tahun == $ta['id_tahun'] ? 'selected' : ''; ?>>
                         <?= htmlspecialchars($ta['tahun'] . ' - ' . $ta['semester']); ?>
                     </option>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </select>
             <select name="status" class="w-full rounded-xl border border-slate-300 px-4 py-3">
                 <option value="">Semua Status</option>
@@ -137,8 +140,8 @@ require_once "../../includes/navbar.php";
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                    <?php if ($q && mysqli_num_rows($q) > 0): ?>
-                        <?php while ($row = mysqli_fetch_assoc($q)): ?>
+                    <?php if (!empty($data_jadwal)): ?>
+                        <?php foreach ($data_jadwal as $row): ?>
                             <tr class="hover:bg-slate-50">
                                 <td class="px-4 py-3">
                                     <div class="font-semibold"><?= htmlspecialchars($row['hari']); ?>, <?= htmlspecialchars(substr($row['jam_mulai'], 0, 5)); ?>-<?= htmlspecialchars(substr($row['jam_selesai'], 0, 5)); ?></div>
@@ -164,7 +167,7 @@ require_once "../../includes/navbar.php";
                                     </div>
                                 </td>
                             </tr>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     <?php else: ?>
                         <tr><td colspan="7" class="px-4 py-10 text-center text-slate-500">Data jadwal belum tersedia.</td></tr>
                     <?php endif; ?>
@@ -174,4 +177,4 @@ require_once "../../includes/navbar.php";
     </section>
 </main>
 
-<?php require_once "../../includes/footer.php"; ?>
+<?php require_once __DIR__ . "/../../includes/footer.php"; ?>
